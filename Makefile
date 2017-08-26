@@ -14,7 +14,7 @@ OBJ = $(patsubst %,$(BUILD)/%,$(_OBJ))
 $(BUILD)/%.o: $(SRC)/%.c $(DEPS)
 	$(CC) -c -o $@ $< $(CFLAGS)
 
-cryptopals: $(OBJ)
+$(BUILD)/cryptopals: $(OBJ)
 	gcc -o $@ $^ $(CFLAGS)
 
 .PHONY: clean
