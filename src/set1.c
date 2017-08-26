@@ -1,5 +1,8 @@
-#include <stdio.h>
+#include <math.h>
 #include <stdbool.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
 #include "set1.h"
 
@@ -76,4 +79,129 @@ void fixed_xor(byte* a, byte* b, byte* c, size_t len) {
   for(size_t i = 0; i < len; i++) {
     c[i] = a[i] ^ b[i];
   }
+}
+
+letter_counter* new_counter() {
+  letter_counter* new_counter = malloc(sizeof(letter_counter));
+  for(size_t i = 0; i < 26; i++) {
+    new_counter->count[i] = 0;
+  }
+  return new_counter;
+}
+
+void free_counter(letter_counter* counter) {
+  free(counter);
+}
+
+void count(char letter, letter_counter* counter) {
+  if(letter >= 'a' && letter <= 'z') {
+    letter = 'A' + (letter - 'a');
+  }
+  if(letter >= 'A' && letter <= 'Z') {
+    counter->count[(letter - 'A')]++;
+  }
+}
+
+int count_total(letter_counter* counter) {
+  int result = 0;
+  for(size_t i = 0; i < 26; i++) {
+    result += counter->count[i];
+  }
+  return result;
+}
+
+letter_frequencies* from_counter(letter_counter* counter) {
+  float total = (float) count_total(counter);
+  letter_frequencies* new_frequencies = malloc(sizeof(letter_frequencies));
+  for(size_t i = 0; i < 26; i++) {
+    new_frequencies->frequencies[i] = (float)(counter->count[i]) / total;
+  }
+  return new_frequencies;
+}
+
+// https://en.wikipedia.org/wiki/Letter_frequency
+letter_frequencies* english() {
+  letter_frequencies* eng = malloc(sizeof(letter_frequencies));
+  eng->frequencies['a' - 'a'] = 0.08167;
+  eng->frequencies['b' - 'a'] = 0.01492;
+  eng->frequencies['c' - 'a'] = 0.02782;
+  eng->frequencies['d' - 'a'] = 0.04253;
+  eng->frequencies['e' - 'a'] = 0.12702;
+  eng->frequencies['f' - 'a'] = 0.02228;
+  eng->frequencies['g' - 'a'] = 0.02015;
+  eng->frequencies['h' - 'a'] = 0.06094;
+  eng->frequencies['i' - 'a'] = 0.06966;
+  eng->frequencies['j' - 'a'] = 0.00153;
+  eng->frequencies['k' - 'a'] = 0.00772;
+  eng->frequencies['l' - 'a'] = 0.04025;
+  eng->frequencies['m' - 'a'] = 0.02406;
+  eng->frequencies['n' - 'a'] = 0.06749;
+  eng->frequencies['o' - 'a'] = 0.07507;
+  eng->frequencies['p' - 'a'] = 0.01929;
+  eng->frequencies['q' - 'a'] = 0.00095;
+  eng->frequencies['r' - 'a'] = 0.05987;
+  eng->frequencies['s' - 'a'] = 0.06327;
+  eng->frequencies['t' - 'a'] = 0.09056;
+  eng->frequencies['u' - 'a'] = 0.02758;
+  eng->frequencies['v' - 'a'] = 0.00978;
+  eng->frequencies['w' - 'a'] = 0.02360;
+  eng->frequencies['x' - 'a'] = 0.00150;
+  eng->frequencies['y' - 'a'] = 0.01974;
+  eng->frequencies['z' - 'a'] = 0.00074;
+  return eng;
+}
+
+void free_frequencies(letter_frequencies* frequencies) {
+  free(frequencies);
+}
+
+float diff(letter_frequencies* a, letter_frequencies* b) {
+  float result = 0;
+  for(size_t i; i < 26; i++) {
+    result += fabs(a->frequencies[i] - b->frequencies[i]);
+  }
+  return result;
+}
+
+void decrypt_fixed_xor(byte* in, byte* out, size_t len) {
+  letter_frequencies* eng = english();
+
+  size_t num_bytes_to_try = 84;
+  byte bytes[84] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%^&*()-_=+[{]}\\|;:'\",<.>/?`~";
+
+  size_t index_of_closest_to_english = 0;
+  float closest_to_english = INFINITY;
+
+  for(size_t i = 0; i < num_bytes_to_try; i++) {
+    // xor the input with a single byte
+    byte b = bytes[i];
+    byte single_byte[len];
+    memset(single_byte, b, len * sizeof(byte));
+    byte result[len];
+    memset(result, 0, len * sizeof(byte));
+    fixed_xor(in, single_byte, result, len);
+
+    // count it
+    letter_counter* counter = new_counter();
+    for(size_t j = 0; j < len; j++) {
+      count((char) result[j], counter);
+    }
+
+    // compare frequencies to english
+    letter_frequencies* frequencies = from_counter(counter);
+    free_counter(counter);
+    if(diff(frequencies, eng) <= closest_to_english) {
+      index_of_closest_to_english = i;
+    }
+    free_frequencies(frequencies);
+  }
+
+  // since we know which byte to xor with, lets just xor it again
+  byte b = bytes[index_of_closest_to_english];
+  byte single_byte[len];
+  memset(single_byte, b, len * sizeof(byte));
+  fixed_xor(in, single_byte, out, len);
+
+  // delete english
+  free_frequencies(eng);
 }

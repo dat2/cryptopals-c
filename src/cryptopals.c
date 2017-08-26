@@ -39,11 +39,28 @@ static void challenge2() {
   printf("expected == actual: %s\n", strcmp(expected, c_hex) == 0 ? "true" : "false");
 }
 
+static void challenge3() {
+  char unknown_hex[68] = "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736";
+  byte unknown[34] = {0};
+  char decoded[35] = {0};
+  char expected[35] = {0};
+
+  hex_to_bytes(unknown_hex, unknown, 68);
+  decrypt_fixed_xor(unknown, decoded, 34);
+
+  printf("challenge 3:\n");
+  printf("expected: %s\n", expected);
+  printf("actual  : %s\n", decoded);
+  printf("expected == actual: %s\n", strcmp(expected, decoded) == 0 ? "true" : "false");
+}
+
 int main(int argc, char** argv) {
 
   challenge1();
   printf("\n");
   challenge2();
+  printf("\n");
+  challenge3();
 
   return 0;
 }
