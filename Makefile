@@ -8,7 +8,7 @@ CFLAGS = -I$(INCLUDE) -Wall
 _DEPS = set1.h
 DEPS = $(patsubst %,$(INCLUDE)/%,$(_DEPS))
 
-_OBJ = set1.o cryptopals.o
+_OBJ = utils.o set1.o cryptopals.o
 OBJ = $(patsubst %,$(BUILD)/%,$(_OBJ))
 
 $(BUILD)/%.o: $(SRC)/%.c $(DEPS)

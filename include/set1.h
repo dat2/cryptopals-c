@@ -1,13 +1,10 @@
-typedef unsigned char byte;
+#ifndef SET_1_H
+#define SET_1_H
 
-void hex_to_bytes(char* in, byte* out, size_t len);
-
-void bytes_to_hex(byte* bytes, char* out, size_t len);
+#include "utils.h"
 
 // challenge 1
 void bytes_to_base64(byte* in, char* out, size_t len);
-
-void print_bytes_hex(byte* in, size_t len);
 
 // challenge 2
 void fixed_xor(byte* a, byte* b, byte* c, size_t len);
@@ -44,3 +41,5 @@ void print_letter_frequencies(letter_frequencies* frequencies);
 
 // challenge 3
 void decrypt_fixed_xor(byte* in, byte* out, size_t len);
+
+#endif

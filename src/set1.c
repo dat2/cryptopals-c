@@ -6,38 +6,6 @@
 
 #include "set1.h"
 
-static byte hex_to_num(char c) {
-  if(c >= '0' && c <= '9') {
-    return (byte)(c - '0');
-  } else if (c >= 'a' && c <= 'f') {
-    return (byte)((c - 'a') + 10);
-  } else if (c >= 'A' && c <= 'F') {
-    return (byte)((c - 'A') + 10);
-  } else {
-    return (byte)(0);
-  }
-}
-
-static byte bytes_for_hex(char first, char second) {
-  byte result = 0;
-  result = result ^ (hex_to_num(first) << 4);
-  result = result ^ (hex_to_num(second));
-  return result;
-}
-
-void hex_to_bytes(char* in, byte* out, size_t len) {
-  for(size_t i = 0, j = 0; i < len; i += 2, j++) {
-    byte b = bytes_for_hex(in[i], in[i + 1]);
-    out[j] = b;
-  }
-}
-
-void bytes_to_hex(byte* bytes, char* out, size_t len) {
-  for(size_t i = 0; i < len; i++) {
-    snprintf(out + (i * 2), 3, "%02x", bytes[i]);
-  }
-}
-
 static char index_to_char(byte index) {
   if(index < 26) {
     return 'A' + index;
@@ -73,13 +41,6 @@ void bytes_to_base64(byte* in, char* out, size_t len) {
     out[j + 2] = index_to_char(third);
     out[j + 3] = index_to_char(fourth);
   }
-}
-
-void print_bytes_hex(byte* in, size_t len) {
-  char hex[len * 2];
-  memset(hex, 0, len * 2);
-  bytes_to_hex(in, hex, len);
-  printf("%s\n", hex);
 }
 
 void fixed_xor(byte* a, byte* b, byte* c, size_t len) {
