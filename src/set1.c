@@ -3,7 +3,7 @@
 
 #include "set1.h"
 
-byte hex_to_num(char c) {
+static byte hex_to_num(char c) {
   if(c >= '0' && c <= '9') {
     return (byte)(c - '0');
   } else if (c >= 'a' && c <= 'f') {
@@ -15,28 +15,27 @@ byte hex_to_num(char c) {
   }
 }
 
-byte bytes_for_hex(char first, char second) {
+static byte bytes_for_hex(char first, char second) {
   byte result = 0;
   result = result ^ (hex_to_num(first) << 4);
   result = result ^ (hex_to_num(second));
   return result;
 }
 
-void hex_to_bytes(char* in, size_t len, byte* out) {
+void hex_to_bytes(char* in, byte* out, size_t len) {
   for(size_t i = 0, j = 0; i < len; i += 2, j++) {
     byte b = bytes_for_hex(in[i], in[i + 1]);
     out[j] = b;
   }
 }
 
-void print_bytes_hex(byte* bytes, size_t len) {
+void bytes_to_hex(byte* bytes, char* out, size_t len) {
   for(size_t i = 0; i < len; i++) {
-    printf("%02x", bytes[i]);
+    snprintf(out + (i * 2), 3, "%02x", bytes[i]);
   }
-  printf("\n");
 }
 
-char index_to_char(byte index) {
+static char index_to_char(byte index) {
   if(index < 26) {
     return 'A' + index;
   } else if(index < 52) {
@@ -52,14 +51,7 @@ char index_to_char(byte index) {
   }
 }
 
-void print_binary(int number, int num_digits) {
-    int digit;
-    for(digit = num_digits - 1; digit >= 0; digit--) {
-        printf("%c", number & (1 << digit) ? '1' : '0');
-    }
-}
-
-void bytes_to_base64(byte* in, size_t len, char* out) {
+void bytes_to_base64(byte* in, char* out, size_t len) {
   for(size_t i = 0, j = 0; i < len; i += 3, j += 4) {
     bool has_one_byte = (i + 1) >= len;
     bool has_two_bytes = (i + 2) >= len;
@@ -77,5 +69,11 @@ void bytes_to_base64(byte* in, size_t len, char* out) {
     out[j + 1] = index_to_char(second);
     out[j + 2] = index_to_char(third);
     out[j + 3] = index_to_char(fourth);
+  }
+}
+
+void fixed_xor(byte* a, byte* b, byte* c, size_t len) {
+  for(size_t i = 0; i < len; i++) {
+    c[i] = a[i] ^ b[i];
   }
 }
