@@ -43,10 +43,10 @@ static void challenge3() {
   char unknown_hex[68] = "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736";
   byte unknown[34] = {0};
   char decoded[35] = {0};
-  char expected[35] = {0};
+  char expected[35] = "Cooking MC's like a pound of bacon";
 
   hex_to_bytes(unknown_hex, unknown, 68);
-  decrypt_fixed_xor(unknown, decoded, 34);
+  decrypt_fixed_xor(unknown, (byte*) decoded, 34);
 
   printf("challenge 3:\n");
   printf("expected: %s\n", expected);

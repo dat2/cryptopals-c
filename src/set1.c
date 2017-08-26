@@ -75,6 +75,13 @@ void bytes_to_base64(byte* in, char* out, size_t len) {
   }
 }
 
+void print_bytes_hex(byte* in, size_t len) {
+  char hex[len * 2];
+  memset(hex, 0, len * 2);
+  bytes_to_hex(in, hex, len);
+  printf("%s\n", hex);
+}
+
 void fixed_xor(byte* a, byte* b, byte* c, size_t len) {
   for(size_t i = 0; i < len; i++) {
     c[i] = a[i] ^ b[i];
@@ -108,6 +115,17 @@ int count_total(letter_counter* counter) {
     result += counter->count[i];
   }
   return result;
+}
+
+void print_letter_counter(letter_counter* counter) {
+  printf("{ ");
+  for(size_t i = 0; i < 26; i++) {
+    printf("%c => %d", (char) ('A' + i), counter->count[i]);
+    if(i < 25) {
+      printf(", ");
+    }
+  }
+  printf(" }\n");
 }
 
 letter_frequencies* from_counter(letter_counter* counter) {
@@ -157,10 +175,21 @@ void free_frequencies(letter_frequencies* frequencies) {
 
 float diff(letter_frequencies* a, letter_frequencies* b) {
   float result = 0;
-  for(size_t i; i < 26; i++) {
+  for(size_t i = 0; i < 26; i++) {
     result += fabs(a->frequencies[i] - b->frequencies[i]);
   }
   return result;
+}
+
+void print_letter_frequencies(letter_frequencies* frequencies) {
+  printf("{ ");
+  for(size_t i = 0; i < 26; i++) {
+    printf("%c => %.3f", (char) ('A' + i), (100 * frequencies->frequencies[i]));
+    if(i < 25) {
+      printf(", ");
+    }
+  }
+  printf(" }\n");
 }
 
 void decrypt_fixed_xor(byte* in, byte* out, size_t len) {
@@ -177,21 +206,23 @@ void decrypt_fixed_xor(byte* in, byte* out, size_t len) {
     byte b = bytes[i];
     byte single_byte[len];
     memset(single_byte, b, len * sizeof(byte));
-    byte result[len];
-    memset(result, 0, len * sizeof(byte));
-    fixed_xor(in, single_byte, result, len);
+    byte xored_input[len];
+    memset(xored_input, 0, len * sizeof(byte));
+    fixed_xor(in, single_byte, xored_input, len);
 
     // count it
     letter_counter* counter = new_counter();
     for(size_t j = 0; j < len; j++) {
-      count((char) result[j], counter);
+      count((char) xored_input[j], counter);
     }
 
     // compare frequencies to english
     letter_frequencies* frequencies = from_counter(counter);
     free_counter(counter);
-    if(diff(frequencies, eng) <= closest_to_english) {
+    float difference = diff(frequencies, eng);
+    if(difference <= closest_to_english) {
       index_of_closest_to_english = i;
+      closest_to_english = difference;
     }
     free_frequencies(frequencies);
   }

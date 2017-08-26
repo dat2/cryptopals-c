@@ -3,7 +3,7 @@ BUILD = build
 SRC = src
 
 CC = gcc
-CFLAGS = -I$(INCLUDE)
+CFLAGS = -I$(INCLUDE) -Wall
 
 _DEPS = set1.h
 DEPS = $(patsubst %,$(INCLUDE)/%,$(_DEPS))
