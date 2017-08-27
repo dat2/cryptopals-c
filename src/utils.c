@@ -41,28 +41,12 @@ void bytes_to_ascii(byte* bytes, char* out, size_t len) {
   for(size_t i = 0; i < len; i++) {
     int num_bytes;
     char *format;
-    char args[3] = {0};
+    char args[2] = {0};
 
-    if(bytes[i] > 31 && bytes[i] < 127) {
+    if((bytes[i] > 31 && bytes[i] < 127) || bytes[i] == '\t' || bytes[i] == '\n' || bytes[i] == '\r') {
       num_bytes = 1;
       format = "%s";
       args[0] = bytes[i];
-      args[1] = ' ';
-    } else if(bytes[i] == '\t') {
-      num_bytes = 2;
-      format = "%s";
-      args[0] = '\\';
-      args[1] = 't';
-    } else if(bytes[i] == '\n') {
-      num_bytes = 2;
-      format = "%s";
-      args[0] = '\\';
-      args[1] = 'n';
-    } else if(bytes[i] == '\r') {
-      num_bytes = 2;
-      format = "%s";
-      args[0] = '\\';
-      args[1] = 'r';
     } else {
       num_bytes = 1;
       format = "%s";

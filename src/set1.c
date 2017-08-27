@@ -49,130 +49,9 @@ void fixed_xor(byte* a, byte* b, byte* c, size_t len) {
   }
 }
 
-letter_counter* new_counter() {
-  letter_counter* new_counter = malloc(sizeof(letter_counter));
-  for(size_t i = 0; i < 26; i++) {
-    new_counter->count[i] = 0;
-  }
-  return new_counter;
-}
-
-void free_counter(letter_counter* counter) {
-  free(counter);
-}
-
-void count(char letter, letter_counter* counter) {
-  if(letter >= 'a' && letter <= 'z') {
-    letter = 'A' + (letter - 'a');
-  }
-  if(letter >= 'A' && letter <= 'Z') {
-    counter->count[(letter - 'A')]++;
-  }
-}
-
-int count_total(letter_counter* counter) {
-  int result = 0;
-  for(size_t i = 0; i < 26; i++) {
-    result += counter->count[i];
-  }
-  return result;
-}
-
-void print_letter_counter(letter_counter* counter) {
-  printf("{ ");
-  for(size_t i = 0; i < 26; i++) {
-    printf("%c => %d", (char) ('A' + i), counter->count[i]);
-    if(i < 25) {
-      printf(", ");
-    }
-  }
-  printf(" }\n");
-}
-
-letter_frequencies* from_counter(letter_counter* counter) {
-  float total = (float) count_total(counter);
-  letter_frequencies* new_frequencies = malloc(sizeof(letter_frequencies));
-  for(size_t i = 0; i < 26; i++) {
-    new_frequencies->frequencies[i] = (float)(counter->count[i]) / total;
-  }
-  return new_frequencies;
-}
-
-// https://en.wikipedia.org/wiki/Letter_frequency
-letter_frequencies* english() {
-  letter_frequencies* eng = malloc(sizeof(letter_frequencies));
-  eng->frequencies['a' - 'a'] = 0.08167;
-  eng->frequencies['b' - 'a'] = 0.01492;
-  eng->frequencies['c' - 'a'] = 0.02782;
-  eng->frequencies['d' - 'a'] = 0.04253;
-  eng->frequencies['e' - 'a'] = 0.12702;
-  eng->frequencies['f' - 'a'] = 0.02228;
-  eng->frequencies['g' - 'a'] = 0.02015;
-  eng->frequencies['h' - 'a'] = 0.06094;
-  eng->frequencies['i' - 'a'] = 0.06966;
-  eng->frequencies['j' - 'a'] = 0.00153;
-  eng->frequencies['k' - 'a'] = 0.00772;
-  eng->frequencies['l' - 'a'] = 0.04025;
-  eng->frequencies['m' - 'a'] = 0.02406;
-  eng->frequencies['n' - 'a'] = 0.06749;
-  eng->frequencies['o' - 'a'] = 0.07507;
-  eng->frequencies['p' - 'a'] = 0.01929;
-  eng->frequencies['q' - 'a'] = 0.00095;
-  eng->frequencies['r' - 'a'] = 0.05987;
-  eng->frequencies['s' - 'a'] = 0.06327;
-  eng->frequencies['t' - 'a'] = 0.09056;
-  eng->frequencies['u' - 'a'] = 0.02758;
-  eng->frequencies['v' - 'a'] = 0.00978;
-  eng->frequencies['w' - 'a'] = 0.02360;
-  eng->frequencies['x' - 'a'] = 0.00150;
-  eng->frequencies['y' - 'a'] = 0.01974;
-  eng->frequencies['z' - 'a'] = 0.00074;
-  return eng;
-}
-
-void free_frequencies(letter_frequencies* frequencies) {
-  free(frequencies);
-}
-
-float diff(letter_frequencies* a, letter_frequencies* b) {
-  float result = 0;
-  for(size_t i = 0; i < 26; i++) {
-    result += fabs(a->frequencies[i] - b->frequencies[i]);
-  }
-  return result;
-}
-
-void print_letter_frequencies(letter_frequencies* frequencies) {
-  printf("{ ");
-  for(size_t i = 0; i < 26; i++) {
-    printf("%c => %.3f", (char) ('A' + i), (100 * frequencies->frequencies[i]));
-    if(i < 25) {
-      printf(", ");
-    }
-  }
-  printf(" }\n");
-}
-
-static float score(byte* in, size_t len, letter_frequencies* eng) {
-  // count it
-  letter_counter* counter = new_counter();
-  for(size_t j = 0; j < len; j++) {
-    count((char) in[j], counter);
-  }
-
-  // compare frequencies to english
-  letter_frequencies* frequencies = from_counter(counter);
-  free_counter(counter);
-  float difference = diff(frequencies, eng);
-  free_frequencies(frequencies);
-  return difference;
-}
-
 void decrypt_fixed_xor(byte* in, byte* out, size_t len) {
-  letter_frequencies* eng = english();
-
-  size_t num_bytes_to_try = 62;
-  byte bytes[62] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%^&*()";
+  size_t num_bytes_to_try = 85;
+  byte bytes[85] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!@#$%^&*()-_=+[{]}\\|;:\"',<.>/? ~`";
 
   size_t index_of_best_candidate = 0;
   float score_of_best_candidate = INFINITY;
@@ -188,7 +67,7 @@ void decrypt_fixed_xor(byte* in, byte* out, size_t len) {
 
     // count the frequencies, compare to english
     // the one that is closest to english is probably the answer we want
-    float score_candidate = score(xored_input, len, eng);
+    float score_candidate = score(xored_input, len);
     if(score_candidate <= score_of_best_candidate) {
       index_of_best_candidate = i;
       score_of_best_candidate = score_candidate;
@@ -200,14 +79,80 @@ void decrypt_fixed_xor(byte* in, byte* out, size_t len) {
   byte single_byte[len];
   memset(single_byte, b, len * sizeof(byte));
   fixed_xor(in, single_byte, out, len);
+}
 
-  // delete english
-  free_frequencies(eng);
+letter_distribution new_distribution() {
+  letter_distribution new_distribution;
+  for(size_t i = 0; i < 26; i++) {
+    new_distribution.count[i] = 0;
+  }
+  new_distribution.penalty = 0;
+  new_distribution.total = 0;
+  return new_distribution;
+}
+
+void count(letter_distribution* distribution, char letter) {
+  if(letter >= 'a' && letter <= 'z') {
+    letter = 'A' + (letter - 'a');
+  }
+  if(letter >= 'A' && letter <= 'Z') {
+    distribution->count[(letter - 'A')]++;
+    distribution->total++;
+  } else if(letter != ' ') {
+    distribution->penalty++;
+    distribution->total++;
+  }
+}
+
+// https://en.wikipedia.org/wiki/Letter_frequency
+static float ENGLISH_LETTER_FREQUENCIES[26] = {
+  0.08167,
+  0.01492,
+  0.02782,
+  0.04253,
+  0.12702,
+  0.02228,
+  0.02015,
+  0.06094,
+  0.06966,
+  0.00153,
+  0.00772,
+  0.04025,
+  0.02406,
+  0.06749,
+  0.07507,
+  0.01929,
+  0.00095,
+  0.05987,
+  0.06327,
+  0.09056,
+  0.02758,
+  0.00978,
+  0.02360,
+  0.00150,
+  0.01974,
+  0.00074
+};
+
+float error(letter_distribution* distribution) {
+  float result = 0;
+  for(size_t i = 0; i < 26; i++) {
+    float frequency = (float)(distribution->count[i]) / (float)(distribution->total);
+    result += fabs( frequency - ENGLISH_LETTER_FREQUENCIES[i] );
+  }
+  result += (float) distribution->penalty;
+  return result;
+}
+
+float score(byte* in, size_t len) {
+  letter_distribution distribution = new_distribution();
+  for(size_t j = 0; j < len; j++) {
+    count(&distribution, (char) in[j]);
+  }
+  return error(&distribution);
 }
 
 void detect_single_character_xor(byte** bytes, size_t* byte_lengths, size_t num_byte_strings, byte** out, size_t* out_len) {
-  letter_frequencies* eng = english();
-
   size_t index_of_best_candidate = 0;
   float score_of_best_candidate = INFINITY;
   byte* best_candidate = (byte*) NULL;
@@ -222,14 +167,16 @@ void detect_single_character_xor(byte** bytes, size_t* byte_lengths, size_t num_
 
     // get the best candidate
     decrypt_fixed_xor(bytes[i], decoded, byte_lengths[i]);
+    float score_candidate = score(decoded, byte_lengths[i]);
+
     printf("======================\n");
-    printf("%d %d\n", i, byte_lengths[i]);
+    printf("%zu %zu %.3f\n", i, byte_lengths[i], score_candidate);
     print_bytes_hex(bytes[i], byte_lengths[i]);
     print_bytes_hex(decoded, byte_lengths[i]);
     print_bytes_ascii(decoded, byte_lengths[i]);
     printf("======================\n");
-    float score_candidate = score(decoded, byte_lengths[i], eng);
-    if(score_candidate <= score_of_best_candidate) {
+
+    if(score_candidate < score_of_best_candidate) {
       index_of_best_candidate = i;
       score_of_best_candidate = score_candidate;
 
@@ -244,6 +191,4 @@ void detect_single_character_xor(byte** bytes, size_t* byte_lengths, size_t num_
 
   *out = best_candidate;
   *out_len = byte_lengths[index_of_best_candidate];
-
-  free_frequencies(eng);
 }

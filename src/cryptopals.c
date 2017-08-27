@@ -1,3 +1,4 @@
+#include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -84,6 +85,7 @@ static void challenge4() {
 }
 
 int main(int argc, char** argv) {
+  setlocale(LC_ALL, "");
 
   challenge1();
   printf("\n");
@@ -91,7 +93,7 @@ int main(int argc, char** argv) {
   printf("\n");
   challenge3();
   printf("\n");
-  challenge4();
+  // challenge4();
 
   return 0;
 }
