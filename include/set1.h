@@ -42,4 +42,9 @@ void print_letter_frequencies(letter_frequencies* frequencies);
 // challenge 3
 void decrypt_fixed_xor(byte* in, byte* out, size_t len);
 
+// challenge 4
+letter_frequencies* count_letter_frequencies(byte* in, size_t len);
+
+void detect_single_character_xor(FILE* file);
+
 #endif

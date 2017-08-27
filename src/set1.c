@@ -171,20 +171,13 @@ void decrypt_fixed_xor(byte* in, byte* out, size_t len) {
     memset(xored_input, 0, len * sizeof(byte));
     fixed_xor(in, single_byte, xored_input, len);
 
-    // count it
-    letter_counter* counter = new_counter();
-    for(size_t j = 0; j < len; j++) {
-      count((char) xored_input[j], counter);
-    }
-
-    // compare frequencies to english
-    letter_frequencies* frequencies = from_counter(counter);
-    free_counter(counter);
+    letter_frequencies* frequencies = count_letter_frequencies(xored_input, len);
     float difference = diff(frequencies, eng);
     if(difference <= closest_to_english) {
       index_of_closest_to_english = i;
       closest_to_english = difference;
     }
+
     free_frequencies(frequencies);
   }
 
@@ -196,4 +189,17 @@ void decrypt_fixed_xor(byte* in, byte* out, size_t len) {
 
   // delete english
   free_frequencies(eng);
+}
+
+letter_frequencies* count_letter_frequencies(byte* in, size_t len) {
+  // count it
+  letter_counter* counter = new_counter();
+  for(size_t j = 0; j < len; j++) {
+    count((char) in[j], counter);
+  }
+
+  // compare frequencies to english
+  letter_frequencies* frequencies = from_counter(counter);
+  free_counter(counter);
+  return frequencies;
 }

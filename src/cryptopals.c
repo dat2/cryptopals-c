@@ -55,6 +55,25 @@ static void challenge3() {
   printf("expected == actual: %s\n", strcmp(expected, decoded) == 0 ? "true" : "false");
 }
 
+static void challenge4() {
+  char file_name[11] = "data/4.txt";
+
+  size_t* line_lengths;
+  size_t n_lines;
+  byte** bytes = read_lines_hex(file_name, &line_lengths, &n_lines);
+  for(size_t i = 0; i < n_lines; i++) {
+    print_bytes_hex(bytes[i], line_lengths[i]);
+  }
+
+  printf("challenge 4:\n");
+  // printf("expected: %s\n", expected);
+  // printf("actual  : %s\n", decoded);
+  // printf("expected == actual: %s\n", strcmp(expected, decoded) == 0 ? "true" : "false");
+
+  free(line_lengths);
+  free_bytes(bytes, n_lines);
+}
+
 int main(int argc, char** argv) {
 
   challenge1();
@@ -62,6 +81,8 @@ int main(int argc, char** argv) {
   challenge2();
   printf("\n");
   challenge3();
+  printf("\n");
+  challenge4();
 
   return 0;
 }
