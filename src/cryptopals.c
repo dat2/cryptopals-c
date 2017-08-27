@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include "set1.h"
@@ -43,35 +44,43 @@ static void challenge2() {
 static void challenge3() {
   char unknown_hex[68] = "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736";
   byte unknown[34] = {0};
-  char decoded[35] = {0};
+  byte decoded[34] = {0};
+  char decoded_ascii[68] = {0};
   char expected[35] = "Cooking MC's like a pound of bacon";
 
   hex_to_bytes(unknown_hex, unknown, 68);
-  decrypt_fixed_xor(unknown, (byte*) decoded, 34);
+  decrypt_fixed_xor(unknown, decoded, 34);
+  bytes_to_ascii(decoded, decoded_ascii, 34);
 
   printf("challenge 3:\n");
   printf("expected: %s\n", expected);
-  printf("actual  : %s\n", decoded);
-  printf("expected == actual: %s\n", strcmp(expected, decoded) == 0 ? "true" : "false");
+  printf("actual  : %s\n", decoded_ascii);
+  printf("expected == actual: %s\n", strcmp(expected, decoded_ascii) == 0 ? "true" : "false");
 }
 
 static void challenge4() {
   char file_name[11] = "data/4.txt";
 
   size_t* line_lengths;
-  size_t n_lines;
-  byte** bytes = read_lines_hex(file_name, &line_lengths, &n_lines);
-  for(size_t i = 0; i < n_lines; i++) {
-    print_bytes_hex(bytes[i], line_lengths[i]);
-  }
+  size_t n_byte_strings;
+  byte** bytes = read_lines_hex(file_name, &line_lengths, &n_byte_strings);
+
+  byte* decoded;
+  size_t decoded_len;
+  detect_single_character_xor(bytes, line_lengths, n_byte_strings, &decoded, &decoded_len);
+
+  char* expected = "expected";
+  char* decoded_ascii = calloc(decoded_len * 2, sizeof(char));
+  bytes_to_ascii(decoded, decoded_ascii, decoded_len);
 
   printf("challenge 4:\n");
-  // printf("expected: %s\n", expected);
-  // printf("actual  : %s\n", decoded);
-  // printf("expected == actual: %s\n", strcmp(expected, decoded) == 0 ? "true" : "false");
+  printf("expected: %s\n", expected);
+  printf("actual  : %s\n", decoded_ascii);
+  printf("expected == actual: %s\n", strcmp(expected, decoded_ascii) == 0 ? "true" : "false");
 
   free(line_lengths);
-  free_bytes(bytes, n_lines);
+  free(decoded_ascii);
+  free_bytes(bytes, n_byte_strings);
 }
 
 int main(int argc, char** argv) {

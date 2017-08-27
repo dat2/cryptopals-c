@@ -7,7 +7,11 @@ void hex_to_bytes(char* in, byte* out, size_t len);
 
 void bytes_to_hex(byte* bytes, char* out, size_t len);
 
+void bytes_to_ascii(byte* bytes, char* out, size_t len);
+
 void print_bytes_hex(byte* in, size_t len);
+
+void print_bytes_ascii(byte* in, size_t len);
 
 char* read_file(char* file_name, long* file_size);
 

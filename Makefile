@@ -20,4 +20,4 @@ $(BUILD)/cryptopals: $(OBJ)
 .PHONY: clean
 
 clean:
-	rm -f $(BUILD)/*.o
+	rm -rf $(BUILD)/*

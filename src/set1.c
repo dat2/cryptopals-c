@@ -153,14 +153,29 @@ void print_letter_frequencies(letter_frequencies* frequencies) {
   printf(" }\n");
 }
 
+static float score(byte* in, size_t len, letter_frequencies* eng) {
+  // count it
+  letter_counter* counter = new_counter();
+  for(size_t j = 0; j < len; j++) {
+    count((char) in[j], counter);
+  }
+
+  // compare frequencies to english
+  letter_frequencies* frequencies = from_counter(counter);
+  free_counter(counter);
+  float difference = diff(frequencies, eng);
+  free_frequencies(frequencies);
+  return difference;
+}
+
 void decrypt_fixed_xor(byte* in, byte* out, size_t len) {
   letter_frequencies* eng = english();
 
-  size_t num_bytes_to_try = 84;
-  byte bytes[84] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%^&*()-_=+[{]}\\|;:'\",<.>/?`~";
+  size_t num_bytes_to_try = 62;
+  byte bytes[62] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!@#$%^&*()";
 
-  size_t index_of_closest_to_english = 0;
-  float closest_to_english = INFINITY;
+  size_t index_of_best_candidate = 0;
+  float score_of_best_candidate = INFINITY;
 
   for(size_t i = 0; i < num_bytes_to_try; i++) {
     // xor the input with a single byte
@@ -171,18 +186,17 @@ void decrypt_fixed_xor(byte* in, byte* out, size_t len) {
     memset(xored_input, 0, len * sizeof(byte));
     fixed_xor(in, single_byte, xored_input, len);
 
-    letter_frequencies* frequencies = count_letter_frequencies(xored_input, len);
-    float difference = diff(frequencies, eng);
-    if(difference <= closest_to_english) {
-      index_of_closest_to_english = i;
-      closest_to_english = difference;
+    // count the frequencies, compare to english
+    // the one that is closest to english is probably the answer we want
+    float score_candidate = score(xored_input, len, eng);
+    if(score_candidate <= score_of_best_candidate) {
+      index_of_best_candidate = i;
+      score_of_best_candidate = score_candidate;
     }
-
-    free_frequencies(frequencies);
   }
 
   // since we know which byte to xor with, lets just xor it again
-  byte b = bytes[index_of_closest_to_english];
+  byte b = bytes[index_of_best_candidate];
   byte single_byte[len];
   memset(single_byte, b, len * sizeof(byte));
   fixed_xor(in, single_byte, out, len);
@@ -191,15 +205,45 @@ void decrypt_fixed_xor(byte* in, byte* out, size_t len) {
   free_frequencies(eng);
 }
 
-letter_frequencies* count_letter_frequencies(byte* in, size_t len) {
-  // count it
-  letter_counter* counter = new_counter();
-  for(size_t j = 0; j < len; j++) {
-    count((char) in[j], counter);
+void detect_single_character_xor(byte** bytes, size_t* byte_lengths, size_t num_byte_strings, byte** out, size_t* out_len) {
+  letter_frequencies* eng = english();
+
+  size_t index_of_best_candidate = 0;
+  float score_of_best_candidate = INFINITY;
+  byte* best_candidate = (byte*) NULL;
+
+  for(size_t i = 0; i < num_byte_strings; i++) {
+    // first, allocate size for the decoded version
+    byte* decoded = calloc(byte_lengths[i], sizeof(byte));
+    if(decoded == (byte*) NULL) {
+      exit(-3);
+      break;
+    }
+
+    // get the best candidate
+    decrypt_fixed_xor(bytes[i], decoded, byte_lengths[i]);
+    printf("======================\n");
+    printf("%d %d\n", i, byte_lengths[i]);
+    print_bytes_hex(bytes[i], byte_lengths[i]);
+    print_bytes_hex(decoded, byte_lengths[i]);
+    print_bytes_ascii(decoded, byte_lengths[i]);
+    printf("======================\n");
+    float score_candidate = score(decoded, byte_lengths[i], eng);
+    if(score_candidate <= score_of_best_candidate) {
+      index_of_best_candidate = i;
+      score_of_best_candidate = score_candidate;
+
+      // copy the decoded into the output variable
+      if(best_candidate != (byte*) NULL) {
+        free(best_candidate);
+      }
+      best_candidate = calloc(byte_lengths[i], sizeof(byte));
+      memcpy(best_candidate, decoded, byte_lengths[i]);
+    }
   }
 
-  // compare frequencies to english
-  letter_frequencies* frequencies = from_counter(counter);
-  free_counter(counter);
-  return frequencies;
+  *out = best_candidate;
+  *out_len = byte_lengths[index_of_best_candidate];
+
+  free_frequencies(eng);
 }

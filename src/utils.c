@@ -36,11 +36,55 @@ void bytes_to_hex(byte* bytes, char* out, size_t len) {
   }
 }
 
+void bytes_to_ascii(byte* bytes, char* out, size_t len) {
+  size_t index = 0;
+  for(size_t i = 0; i < len; i++) {
+    int num_bytes;
+    char *format;
+    char args[3] = {0};
+
+    if(bytes[i] > 31 && bytes[i] < 127) {
+      num_bytes = 1;
+      format = "%s";
+      args[0] = bytes[i];
+      args[1] = ' ';
+    } else if(bytes[i] == '\t') {
+      num_bytes = 2;
+      format = "%s";
+      args[0] = '\\';
+      args[1] = 't';
+    } else if(bytes[i] == '\n') {
+      num_bytes = 2;
+      format = "%s";
+      args[0] = '\\';
+      args[1] = 'n';
+    } else if(bytes[i] == '\r') {
+      num_bytes = 2;
+      format = "%s";
+      args[0] = '\\';
+      args[1] = 'r';
+    } else {
+      num_bytes = 1;
+      format = "%s";
+      args[0] = '?';
+    }
+    snprintf(out + index, num_bytes + 1, format, args);
+    index += num_bytes;
+  }
+}
+
 void print_bytes_hex(byte* in, size_t len) {
   char hex[len * 2];
   memset(hex, 0, len * 2);
   bytes_to_hex(in, hex, len);
   printf("%s\n", hex);
+}
+
+void print_bytes_ascii(byte* in, size_t len) {
+  char ascii[len * 2];
+  memset(ascii, 0, len * 2);
+  bytes_to_ascii(in, ascii, len);
+  printf("%s\n", ascii);
 }
 
 char* read_file(char* file_name, long* file_size) {
