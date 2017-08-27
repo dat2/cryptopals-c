@@ -49,36 +49,41 @@ void fixed_xor(byte* a, byte* b, byte* c, size_t len) {
   }
 }
 
-void decrypt_fixed_xor(byte* in, byte* out, size_t len) {
-  size_t num_bytes_to_try = 85;
-  byte bytes[85] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!@#$%^&*()-_=+[{]}\\|;:\"',<.>/? ~`";
+static size_t NUM_BYTES_TO_XOR = 64;
+byte XOR_BYTES[64] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!@#$%^&*() :";
 
+void decrypt_fixed_xor(byte* in, byte* out, size_t len, byte* decryption_char) {
   size_t index_of_best_candidate = 0;
   float score_of_best_candidate = INFINITY;
 
-  for(size_t i = 0; i < num_bytes_to_try; i++) {
-    // xor the input with a single byte
-    byte b = bytes[i];
+  for(size_t i = 0; i < NUM_BYTES_TO_XOR; i++) {
+    // repeat the single byte to the same length as the input
     byte single_byte[len];
-    memset(single_byte, b, len * sizeof(byte));
-    byte xored_input[len];
-    memset(xored_input, 0, len * sizeof(byte));
-    fixed_xor(in, single_byte, xored_input, len);
+    memset(single_byte, XOR_BYTES[i], len * sizeof(byte));
 
-    // count the frequencies, compare to english
-    // the one that is closest to english is probably the answer we want
-    float score_candidate = score(xored_input, len);
+    // allocate memory for the result
+    byte decrypted[len];
+    memset(decrypted, 0, len * sizeof(byte));
+
+    // calculate the xor
+    fixed_xor(in, single_byte, decrypted, len);
+
+    // get the score of the result
+    float score_candidate = score(decrypted, len);
     if(score_candidate <= score_of_best_candidate) {
       index_of_best_candidate = i;
       score_of_best_candidate = score_candidate;
     }
   }
 
-  // since we know which byte to xor with, lets just xor it again
-  byte b = bytes[index_of_best_candidate];
+  // repeat the single byte
   byte single_byte[len];
-  memset(single_byte, b, len * sizeof(byte));
+  memset(single_byte, XOR_BYTES[index_of_best_candidate], len * sizeof(byte));
+
+  // xor it to the output variable
   fixed_xor(in, single_byte, out, len);
+  *decryption_char = XOR_BYTES[index_of_best_candidate];
+
 }
 
 letter_distribution new_distribution() {
@@ -158,35 +163,44 @@ void detect_single_character_xor(byte** bytes, size_t* byte_lengths, size_t num_
   byte* best_candidate = (byte*) NULL;
 
   for(size_t i = 0; i < num_byte_strings; i++) {
-    // first, allocate size for the decoded version
-    byte* decoded = calloc(byte_lengths[i], sizeof(byte));
-    if(decoded == (byte*) NULL) {
+    // first, allocate size for the decrypted version
+    byte* decrypted = calloc(byte_lengths[i], sizeof(byte));
+    if(decrypted == (byte*) NULL) {
       exit(-3);
-      break;
+      return;
     }
 
-    // get the best candidate
-    decrypt_fixed_xor(bytes[i], decoded, byte_lengths[i]);
-    float score_candidate = score(decoded, byte_lengths[i]);
+    // find the best decryption for this line of bytes
+    byte decryption_char;
+    decrypt_fixed_xor(bytes[i], decrypted, byte_lengths[i], &decryption_char);
 
-    printf("======================\n");
-    printf("%zu %zu %.3f\n", i, byte_lengths[i], score_candidate);
-    print_bytes_hex(bytes[i], byte_lengths[i]);
-    print_bytes_hex(decoded, byte_lengths[i]);
-    print_bytes_ascii(decoded, byte_lengths[i]);
-    printf("======================\n");
-
+    // check the score of this line again
+    float score_candidate = score(decrypted, byte_lengths[i]);
     if(score_candidate < score_of_best_candidate) {
       index_of_best_candidate = i;
       score_of_best_candidate = score_candidate;
 
-      // copy the decoded into the output variable
-      if(best_candidate != (byte*) NULL) {
+      // free the previous candidate because of possibly different lengths
+      if(best_candidate == (byte*) NULL) {
         free(best_candidate);
       }
+
+      // allocate memory
       best_candidate = calloc(byte_lengths[i], sizeof(byte));
-      memcpy(best_candidate, decoded, byte_lengths[i]);
+      if(best_candidate == (byte*) NULL) {
+        exit(-3);
+        return;
+      }
+
+      // copy the decrypted into the best candidate
+      memcpy(best_candidate, decrypted, byte_lengths[i]);
     }
+
+    printf("=======================================\n");
+    print_bytes_hex(bytes[i], byte_lengths[i]);
+    print_bytes_hex(decrypted, byte_lengths[i]);
+    print_bytes_ascii(decrypted, byte_lengths[i]);
+    printf("=======================================\n");
   }
 
   *out = best_candidate;

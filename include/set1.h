@@ -10,7 +10,7 @@ void bytes_to_base64(byte* in, char* out, size_t len);
 void fixed_xor(byte* a, byte* b, byte* c, size_t len);
 
 // challenge 3
-void decrypt_fixed_xor(byte* in, byte* out, size_t len);
+void decrypt_fixed_xor(byte* in, byte* out, size_t len, byte* decryption_char);
 
 typedef struct {
   int count[26];

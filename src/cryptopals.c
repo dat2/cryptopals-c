@@ -48,14 +48,16 @@ static void challenge3() {
   byte decoded[34] = {0};
   char decoded_ascii[68] = {0};
   char expected[35] = "Cooking MC's like a pound of bacon";
+  byte decryption_char;
 
   hex_to_bytes(unknown_hex, unknown, 68);
-  decrypt_fixed_xor(unknown, decoded, 34);
+  decrypt_fixed_xor(unknown, decoded, 34, &decryption_char);
   bytes_to_ascii(decoded, decoded_ascii, 34);
 
   printf("challenge 3:\n");
   printf("expected: %s\n", expected);
   printf("actual  : %s\n", decoded_ascii);
+  printf("decryption char: %c\n", decryption_char);
   printf("expected == actual: %s\n", strcmp(expected, decoded_ascii) == 0 ? "true" : "false");
 }
 
@@ -70,7 +72,7 @@ static void challenge4() {
   size_t decoded_len;
   detect_single_character_xor(bytes, line_lengths, n_byte_strings, &decoded, &decoded_len);
 
-  char* expected = "expected";
+  char* expected = "Now that the party is jumping\\n";
   char* decoded_ascii = calloc(decoded_len * 2, sizeof(char));
   bytes_to_ascii(decoded, decoded_ascii, decoded_len);
 
@@ -93,7 +95,7 @@ int main(int argc, char** argv) {
   printf("\n");
   challenge3();
   printf("\n");
-  // challenge4();
+  challenge4();
 
   return 0;
 }
