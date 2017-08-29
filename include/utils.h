@@ -3,22 +3,29 @@
 
 typedef unsigned char byte;
 
-void hex_to_bytes(char* in, byte* out, size_t len);
+typedef struct {
+  size_t length;
+  byte* buffer;
+} byte_string;
 
-void bytes_to_hex(byte* bytes, char* out, size_t len);
+void from_hex(byte_string* self, char* hex);
 
-void bytes_to_ascii(byte* bytes, char* out, size_t len);
+void to_hex(byte_string* self, char* out);
 
-void print_bytes_hex(byte* in, size_t len);
+void to_ascii(byte_string* self, char* out);
 
-void print_bytes_ascii(byte* in, size_t len);
+void print_bytes_hex(byte_string* self);
+
+void print_bytes_ascii(byte_string* self);
+
+void free_byte_string(byte_string* self);
+
+void free_byte_strings(byte_string* byte_strings, size_t len);
 
 char* read_file(char* file_name, long* file_size);
 
 char** split_lines(char* buffer, size_t* n_lines);
 
-byte** read_lines_hex(char* file_name, size_t** line_lengths, size_t* n_lines);
-
-void free_bytes(byte** bytes, size_t len);
+byte_string* read_lines_hex(char* file_name, size_t* n_lines);
 
 #endif

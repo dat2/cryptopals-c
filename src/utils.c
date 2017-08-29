@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -23,16 +24,22 @@ static byte bytes_for_hex(char first, char second) {
   return result;
 }
 
-void hex_to_bytes(char* in, byte* out, size_t len) {
-  for(size_t i = 0, j = 0; i < len; i += 2, j++) {
-    byte b = bytes_for_hex(in[i], in[i + 1]);
-    out[j] = b;
+void from_hex(byte_string* self, char* hex) {
+  assert(self != NULL);
+  assert(hex != NULL);
+
+  for(size_t i = 0, j = 0; i < self->length * 2; i += 2, j++) {
+    byte b = bytes_for_hex(hex[i], hex[i + 1]);
+    self->buffer[j] = b;
   }
 }
 
-void bytes_to_hex(byte* bytes, char* out, size_t len) {
-  for(size_t i = 0; i < len; i++) {
-    snprintf(out + (i * 2), 3, "%02x", bytes[i]);
+void to_hex(byte_string* self, char* out) {
+  assert(self != NULL);
+  assert(out != NULL);
+
+  for(size_t i = 0; i < self->length; i++) {
+    snprintf(out + (i * 2), 3, "%02x", self->buffer[i]);
   }
 }
 
@@ -46,20 +53,23 @@ static char num_to_hex(byte b) {
   }
 }
 
-void bytes_to_ascii(byte* bytes, char* out, size_t len) {
+void to_ascii(byte_string* self, char* out) {
+  assert(self != NULL);
+  assert(out != NULL);
+
   size_t index = 0;
-  for(size_t i = 0; i < len; i++) {
+  for(size_t i = 0; i < self->length; i++) {
     int num_bytes;
     char args[5] = {0};
 
-    if((bytes[i] > 31 && bytes[i] < 127)) {
+    if((self->buffer[i] > 31 && self->buffer[i] < 127)) {
       num_bytes = 1;
-      args[0] = bytes[i];
-      if(bytes[i] == (byte) '\\') {
+      args[0] = self->buffer[i];
+      if(self->buffer[i] == (byte) '\\') {
         num_bytes = 2;
         args[1] = '\\';
       }
-    } else if(bytes[i] == '\n') {
+    } else if(self->buffer[i] == '\n') {
       num_bytes = 2;
       args[0] = '\\';
       args[1] = 'n';
@@ -67,26 +77,49 @@ void bytes_to_ascii(byte* bytes, char* out, size_t len) {
       num_bytes = 4;
       args[0] = '\\';
       args[1] = 'x';
-      args[2] = num_to_hex(bytes[i] >> 4);
-      args[3] = num_to_hex(bytes[i] & 0x0F);
+      args[2] = num_to_hex(self->buffer[i] >> 4);
+      args[3] = num_to_hex(self->buffer[i] & 0x0F);
     }
     snprintf(out + index, num_bytes + 1, "%s", args);
     index += num_bytes;
   }
 }
 
-void print_bytes_hex(byte* in, size_t len) {
-  char hex[len * 2];
-  memset(hex, 0, len * 2);
-  bytes_to_hex(in, hex, len);
+void print_bytes_hex(byte_string* self) {
+  assert(self != NULL);
+  assert(self->length >= 0);
+
+  char hex[self->length * 2];
+  memset(hex, 0, self->length * 2);
+  to_hex(self, hex);
   printf("%s\n", hex);
 }
 
-void print_bytes_ascii(byte* in, size_t len) {
-  char ascii[len * 5];
-  memset(ascii, 0, len * 5);
-  bytes_to_ascii(in, ascii, len);
+void print_bytes_ascii(byte_string* self) {
+  assert(self != NULL);
+  assert(self->length >= 0);
+
+  char ascii[self->length * 5];
+  memset(ascii, 0, self->length * 5);
+  to_ascii(self, ascii);
   printf("b'%s'\n", ascii);
+}
+
+void free_byte_string(byte_string* self) {
+  assert(self != NULL);
+  assert(self->buffer != NULL);
+
+  free(self->buffer);
+}
+
+void free_byte_strings(byte_string* byte_strings, size_t len) {
+  assert(byte_strings != NULL);
+  assert(len >= 0);
+
+  for(size_t i = 0; i < len; i++) {
+    free_byte_string(&byte_strings[i]);
+  }
+  free(byte_strings);
 }
 
 char* read_file(char* file_name, long* file_size) {
@@ -167,7 +200,7 @@ char** split_lines(char* buffer, size_t* n_lines) {
   return lines;
 }
 
-byte** read_lines_hex(char* file_name, size_t** line_lengths, size_t* n_lines) {
+byte_string* read_lines_hex(char* file_name, size_t* n_lines) {
   // read the file into a buffer
   long file_size;
   char* file_buffer = read_file(file_name, &file_size);
@@ -177,32 +210,25 @@ byte** read_lines_hex(char* file_name, size_t** line_lengths, size_t* n_lines) {
   free(file_buffer);
 
   // allocate memory for the result array
-  byte** result = calloc(*n_lines, sizeof(byte*));
-  if(result == (byte**) NULL) {
+  byte_string* result = (byte_string*) calloc(*n_lines, sizeof(byte_string));
+  if(result == NULL) {
     exit(-3);
-    return (byte**) NULL;
-  }
-
-  // allocate memory for the line length array
-  *line_lengths = (size_t*) calloc(*n_lines, sizeof(size_t));
-  if(*line_lengths == (size_t*) NULL) {
-    exit(-3);
-    return (byte**) NULL;
+    return NULL;
   }
 
   for(size_t i = 0; i < *n_lines; i++) {
     // allocate the byte array
     size_t line_length = strlen(lines[i]);
-    byte* line = calloc(line_length / 2, sizeof(byte));
-    if(line == (byte*) NULL) {
+    byte* line = (byte*) calloc(line_length / 2, sizeof(byte));
+    if(line == NULL) {
       exit(-3);
-      return (byte**) NULL;
+      return NULL;
     }
-    *(result + i) = line;
-    (*line_lengths)[i] = line_length / 2;
+    result[i].length = line_length / 2;
+    result[i].buffer = line;
 
     // interpret the hex line as bytes
-    hex_to_bytes(lines[i], line, line_length);
+    from_hex(&result[i], lines[i]);
 
     // free the line
     free(lines[i]);
@@ -211,11 +237,4 @@ byte** read_lines_hex(char* file_name, size_t** line_lengths, size_t* n_lines) {
   free(lines);
 
   return result;
-}
-
-void free_bytes(byte** bytes, size_t len) {
-  for(size_t i = 0; i < len; i++) {
-    free(bytes[i]);
-  }
-  free(bytes);
 }

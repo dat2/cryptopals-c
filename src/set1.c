@@ -1,3 +1,4 @@
+#include <assert.h>
 #include <math.h>
 #include <stdbool.h>
 #include <stdio.h>
@@ -22,14 +23,18 @@ static char index_to_char(byte index) {
   }
 }
 
-void bytes_to_base64(byte* in, char* out, size_t len) {
-  for(size_t i = 0, j = 0; i < len; i += 3, j += 4) {
-    bool has_one_byte = (i + 1) >= len;
-    bool has_two_bytes = (i + 2) >= len;
+void to_base64(byte_string* self, char* out) {
+  assert(self != NULL);
+  assert(out != NULL);
+  assert(self->length >= 0);
 
-    byte first_octet = in[i];
-    byte second_octet = has_one_byte ? 0 : in[i + 1];
-    byte third_octet = has_two_bytes ? 0 : in[i + 2];
+  for(size_t i = 0, j = 0; i < self->length; i += 3, j += 4) {
+    bool has_one_byte = (i + 1) >= self->length;
+    bool has_two_bytes = (i + 2) >= self->length;
+
+    byte first_octet = self->buffer[i];
+    byte second_octet = has_one_byte ? 0 : self->buffer[i + 1];
+    byte third_octet = has_two_bytes ? 0 : self->buffer[i + 2];
 
     byte first = first_octet >> 2;
     byte second = ((first_octet & 0x03) << 4) ^ (second_octet >> 4);
@@ -43,33 +48,49 @@ void bytes_to_base64(byte* in, char* out, size_t len) {
   }
 }
 
-void fixed_xor(byte* a, byte* b, byte* c, size_t len) {
-  for(size_t i = 0; i < len; i++) {
-    c[i] = a[i] ^ b[i];
+void fixed_xor(byte_string* a, byte_string* b, byte_string* c) {
+  assert(a != NULL);
+  assert(b != NULL);
+  assert(c != NULL);
+  assert(a->length >= 0);
+  assert(a->length == b->length);
+  assert(a->length == c->length);
+
+  for(size_t i = 0; i < a->length; i++) {
+    c->buffer[i] = a->buffer[i] ^ b->buffer[i];
   }
 }
 
 static size_t NUM_BYTES_TO_XOR = 64;
 byte XOR_BYTES[64] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!@#$%^&*() :";
 
-void decrypt_fixed_xor(byte* in, byte* out, size_t len, byte* decryption_char) {
+void decrypt_fixed_xor(byte_string* in, byte_string* out, byte* decryption_char) {
+  assert(in != NULL);
+  assert(out != NULL);
+  assert(decryption_char != NULL);
+  assert(in->length >= 0);
+  assert(in->length == out->length);
+
   size_t index_of_best_candidate = 0;
   float score_of_best_candidate = INFINITY;
 
+  size_t len = in->length;
   for(size_t i = 0; i < NUM_BYTES_TO_XOR; i++) {
     // repeat the single byte to the same length as the input
-    byte single_byte[len];
-    memset(single_byte, XOR_BYTES[i], len * sizeof(byte));
+    byte single_byte_buffer[len];
+    memset(single_byte_buffer, XOR_BYTES[i], len * sizeof(byte));
+    byte_string single_byte = { len, single_byte_buffer };
 
     // allocate memory for the result
-    byte decrypted[len];
-    memset(decrypted, 0, len * sizeof(byte));
+    byte decrypted_buffer[len];
+    memset(decrypted_buffer, 0, len * sizeof(byte));
+    byte_string decrypted = { len, decrypted_buffer };
 
     // calculate the xor
-    fixed_xor(in, single_byte, decrypted, len);
+    fixed_xor(in, &single_byte, &decrypted);
 
     // get the score of the result
-    float score_candidate = score(decrypted, len);
+    float score_candidate = score(&decrypted);
     if(score_candidate <= score_of_best_candidate) {
       index_of_best_candidate = i;
       score_of_best_candidate = score_candidate;
@@ -77,11 +98,12 @@ void decrypt_fixed_xor(byte* in, byte* out, size_t len, byte* decryption_char) {
   }
 
   // repeat the single byte
-  byte single_byte[len];
-  memset(single_byte, XOR_BYTES[index_of_best_candidate], len * sizeof(byte));
+  byte single_byte_buffer[len];
+  memset(single_byte_buffer, XOR_BYTES[index_of_best_candidate], len * sizeof(byte));
+  byte_string single_byte = { len, single_byte_buffer };
 
   // xor it to the output variable
-  fixed_xor(in, single_byte, out, len);
+  fixed_xor(in, &single_byte, out);
   *decryption_char = XOR_BYTES[index_of_best_candidate];
 
 }
@@ -96,16 +118,18 @@ letter_distribution new_distribution() {
   return new_distribution;
 }
 
-void count(letter_distribution* distribution, char letter) {
+void count(letter_distribution* self, char letter) {
+  assert(self != NULL);
+
   if(letter >= 'a' && letter <= 'z') {
     letter = 'A' + (letter - 'a');
   }
   if(letter >= 'A' && letter <= 'Z') {
-    distribution->count[(letter - 'A')]++;
-    distribution->total++;
+    self->count[(letter - 'A')]++;
+    self->total++;
   } else if(letter != ' ') {
-    distribution->penalty++;
-    distribution->total++;
+    self->penalty++;
+    self->total++;
   }
 }
 
@@ -139,70 +163,73 @@ static float ENGLISH_LETTER_FREQUENCIES[26] = {
   0.00074
 };
 
-float error(letter_distribution* distribution) {
+float error(letter_distribution* self) {
+  assert(self != NULL);
+
   float result = 0;
   for(size_t i = 0; i < 26; i++) {
-    float frequency = (float)(distribution->count[i]) / (float)(distribution->total);
+    float frequency = (float)(self->count[i]) / (float)(self->total);
     result += fabs( frequency - ENGLISH_LETTER_FREQUENCIES[i] );
   }
-  result += (float) distribution->penalty;
+  result += (float) self->penalty;
   return result;
 }
 
-float score(byte* in, size_t len) {
+float score(byte_string* in) {
+  assert(in != NULL);
+  assert(in->length >= 0);
+
   letter_distribution distribution = new_distribution();
-  for(size_t j = 0; j < len; j++) {
-    count(&distribution, (char) in[j]);
+  for(size_t j = 0; j < in->length; j++) {
+    count(&distribution, (char) in->buffer[j]);
   }
   return error(&distribution);
 }
 
-void detect_single_character_xor(byte** bytes, size_t* byte_lengths, size_t num_byte_strings, byte** out, size_t* out_len) {
+void detect_single_character_xor(byte_string* byte_strings, size_t num_byte_strings, byte_string* out) {
+  assert(byte_strings != NULL);
+  assert(num_byte_strings >= 0);
+  assert(out != NULL);
+
   size_t index_of_best_candidate = 0;
   float score_of_best_candidate = INFINITY;
-  byte* best_candidate = (byte*) NULL;
+  byte_string best_candidate;
 
   for(size_t i = 0; i < num_byte_strings; i++) {
+    assert(byte_strings[i].length >= 0);
+
     // first, allocate size for the decrypted version
-    byte* decrypted = calloc(byte_lengths[i], sizeof(byte));
-    if(decrypted == (byte*) NULL) {
+    byte* decrypted_buffer = (byte*) calloc(byte_strings[i].length, sizeof(byte));
+    if(decrypted_buffer == NULL) {
       exit(-3);
       return;
     }
+    byte_string decrypted = { byte_strings[i].length, decrypted_buffer };
 
     // find the best decryption for this line of bytes
     byte decryption_char;
-    decrypt_fixed_xor(bytes[i], decrypted, byte_lengths[i], &decryption_char);
+    decrypt_fixed_xor(&byte_strings[i], &decrypted, &decryption_char);
 
     // check the score of this line again
-    float score_candidate = score(decrypted, byte_lengths[i]);
+    float score_candidate = score(&decrypted);
     if(score_candidate < score_of_best_candidate) {
       index_of_best_candidate = i;
       score_of_best_candidate = score_candidate;
 
-      // free the previous candidate because of possibly different lengths
-      if(best_candidate == (byte*) NULL) {
-        free(best_candidate);
-      }
+      best_candidate.length = byte_strings[i].length;
+      best_candidate.buffer = decrypted_buffer;
 
-      // allocate memory
-      best_candidate = calloc(byte_lengths[i], sizeof(byte));
-      if(best_candidate == (byte*) NULL) {
-        exit(-3);
-        return;
-      }
-
-      // copy the decrypted into the best candidate
-      memcpy(best_candidate, decrypted, byte_lengths[i]);
+    } else {
+      free(decrypted_buffer);
     }
 
     printf("=======================================\n");
-    print_bytes_hex(bytes[i], byte_lengths[i]);
-    print_bytes_hex(decrypted, byte_lengths[i]);
-    print_bytes_ascii(decrypted, byte_lengths[i]);
+    print_bytes_hex(&byte_strings[i]);
+    print_bytes_hex(&decrypted);
+    print_bytes_ascii(&decrypted);
     printf("=======================================\n");
   }
 
-  *out = best_candidate;
-  *out_len = byte_lengths[index_of_best_candidate];
+  out->length = best_candidate.length;
+  out->buffer = best_candidate.buffer;
 }

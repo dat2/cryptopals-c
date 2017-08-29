@@ -8,12 +8,14 @@
 
 static void challenge1() {
   char hex[96] = "49276d206b696c6c696e6720796f757220627261696e206c696b65206120706f69736f6e6f7573206d757368726f6f6d";
-  byte bytes[48] = {0};
+  byte buffer[48] = {0};
+  byte_string byte_string = { 48, buffer };
+
   char out[128] = {0};
   char expected[128] = "SSdtIGtpbGxpbmcgeW91ciBicmFpbiBsaWtlIGEgcG9pc29ub3VzIG11c2hyb29t";
 
-  hex_to_bytes(hex, bytes, 96);
-  bytes_to_base64(bytes, out, 48);
+  from_hex(&byte_string, hex);
+  to_base64(&byte_string, out);
 
   printf("challenge 1:\n");
   printf("expected: %s\n", expected);
@@ -27,14 +29,17 @@ static void challenge2() {
   char c_hex[37] = {0};
   char expected[37] = "746865206b696420646f6e277420706c6179";
 
-  byte a[18] = {0};
-  byte b[18] = {0};
-  byte c[18] = {0};
+  byte a_buffer[18] = {0};
+  byte_string a = { 18, a_buffer };
+  byte b_buffer[18] = {0};
+  byte_string b = { 18, b_buffer };
+  byte c_buffer[18] = {0};
+  byte_string c = { 18, c_buffer };
 
-  hex_to_bytes(a_hex, a, 36);
-  hex_to_bytes(b_hex, b, 36);
-  fixed_xor(a, b, c, 18);
-  bytes_to_hex(c, c_hex, 18);
+  from_hex(&a, a_hex);
+  from_hex(&b, b_hex);
+  fixed_xor(&a, &b, &c);
+  to_hex(&c, c_hex);
 
   printf("challenge 2:\n");
   printf("expected: %s\n", expected);
@@ -44,15 +49,19 @@ static void challenge2() {
 
 static void challenge3() {
   char unknown_hex[68] = "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736";
-  byte unknown[34] = {0};
-  byte decoded[34] = {0};
+  byte unknown_buffer[34] = {0};
+  byte_string unknown = { 34, unknown_buffer };
+
+  byte decoded_buffer[34] = {0};
+  byte_string decoded = { 34, decoded_buffer };
   char decoded_ascii[68] = {0};
-  char expected[35] = "Cooking MC's like a pound of bacon";
   byte decryption_char;
 
-  hex_to_bytes(unknown_hex, unknown, 68);
-  decrypt_fixed_xor(unknown, decoded, 34, &decryption_char);
-  bytes_to_ascii(decoded, decoded_ascii, 34);
+  char expected[35] = "Cooking MC's like a pound of bacon";
+
+  from_hex(&unknown, unknown_hex);
+  decrypt_fixed_xor(&unknown, &decoded, &decryption_char);
+  to_ascii(&decoded, decoded_ascii);
 
   printf("challenge 3:\n");
   printf("expected: %s\n", expected);
@@ -64,26 +73,24 @@ static void challenge3() {
 static void challenge4() {
   char file_name[11] = "data/4.txt";
 
-  size_t* line_lengths;
   size_t n_byte_strings;
-  byte** bytes = read_lines_hex(file_name, &line_lengths, &n_byte_strings);
+  byte_string* byte_strings = read_lines_hex(file_name, &n_byte_strings);
 
-  byte* decoded;
-  size_t decoded_len;
-  detect_single_character_xor(bytes, line_lengths, n_byte_strings, &decoded, &decoded_len);
+  byte_string decoded = { 0, NULL };
+  detect_single_character_xor(byte_strings, n_byte_strings, &decoded);
+
+  char* decoded_ascii = calloc(decoded.length * 2, sizeof(char));
+  to_ascii(&decoded, decoded_ascii);
 
   char* expected = "Now that the party is jumping\\n";
-  char* decoded_ascii = calloc(decoded_len * 2, sizeof(char));
-  bytes_to_ascii(decoded, decoded_ascii, decoded_len);
 
   printf("challenge 4:\n");
   printf("expected: %s\n", expected);
   printf("actual  : %s\n", decoded_ascii);
   printf("expected == actual: %s\n", strcmp(expected, decoded_ascii) == 0 ? "true" : "false");
 
-  free(line_lengths);
   free(decoded_ascii);
-  free_bytes(bytes, n_byte_strings);
+  free_byte_strings(byte_strings, n_byte_strings);
 }
 
 int main(int argc, char** argv) {

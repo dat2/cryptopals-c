@@ -4,13 +4,13 @@
 #include "utils.h"
 
 // challenge 1
-void bytes_to_base64(byte* in, char* out, size_t len);
+void to_base64(byte_string* self, char* out);
 
 // challenge 2
-void fixed_xor(byte* a, byte* b, byte* c, size_t len);
+void fixed_xor(byte_string* a, byte_string* b, byte_string* c);
 
 // challenge 3
-void decrypt_fixed_xor(byte* in, byte* out, size_t len, byte* decryption_char);
+void decrypt_fixed_xor(byte_string* in, byte_string* out, byte* decryption_char);
 
 typedef struct {
   int count[26];
@@ -20,13 +20,13 @@ typedef struct {
 
 letter_distribution new_distribution();
 
-void count(letter_distribution* distribution, char letter);
+void count(letter_distribution* self, char letter);
 
-float error(letter_distribution* distribution);
+float error(letter_distribution* self);
 
-float score(byte* in, size_t len);
+float score(byte_string* in);
 
 // challenge 4
-void detect_single_character_xor(byte** bytes, size_t* byte_lengths, size_t num_byte_strings, byte** out, size_t* out_len);
+void detect_single_character_xor(byte_string* byte_strings, size_t num_byte_strings, byte_string* out);
 
 #endif

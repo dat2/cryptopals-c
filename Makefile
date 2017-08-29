@@ -5,7 +5,7 @@ SRC = src
 CC = gcc
 CFLAGS = -I$(INCLUDE) -Wall
 
-_DEPS = set1.h
+_DEPS = set1.h utils.h
 DEPS = $(patsubst %,$(INCLUDE)/%,$(_DEPS))
 
 _OBJ = utils.o set1.o cryptopals.o
