@@ -131,7 +131,7 @@ char* read_file(char* file_name, long* file_size) {
   file = fopen(file_name, "r");
   if(file == NULL) {
     exit(1);
-    return (char*) NULL;
+    return NULL;
   }
 
   // count the number of bytes in the file
@@ -141,16 +141,16 @@ char* read_file(char* file_name, long* file_size) {
 
   // allocate the file_buffer
   file_buffer = (char*) malloc(sizeof(char) * (*file_size));
-  if(file_buffer == (char*)NULL) {
+  if(file_buffer == NULL) {
     exit(-2);
-    return (char*) NULL;
+    return NULL;
   }
 
   // copy into the buffer
   bytes_read = fread(file_buffer, sizeof(char), *file_size, file);
   if(bytes_read != (*file_size))  {
     exit(-3);
-    return (char*) NULL;
+    return NULL;
   }
 
   // close the file
@@ -161,28 +161,28 @@ char* read_file(char* file_name, long* file_size) {
 }
 
 char** split_lines(char* buffer, size_t* n_lines) {
-  char** lines = (char**) NULL;
+  char** lines = NULL;
   char delim[2] = "\n";
-  char* line;
+  char* line = NULL;
   size_t num_lines = 0;
-  size_t line_length;
+  size_t line_length = 0;
 
   // allocate memory for the lines
   lines = (char**) malloc(sizeof(char*));
-  if(lines == (char**) NULL) {
+  if(lines == NULL) {
     exit(-3);
-    return (char**) NULL;
+    return NULL;
   }
 
   line = strtok(buffer, delim);
-  while(line != (char*) NULL) {
+  while(line != NULL) {
     num_lines++;
 
     // reallocate lines array
     lines = (char**) realloc(lines, sizeof(char*) * num_lines);
-    if(lines == (char**) NULL) {
+    if(lines == NULL) {
       exit(-3);
-      return (char**) NULL;
+      return NULL;
     }
 
     // allocate memory for the line (and zero it out)

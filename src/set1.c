@@ -61,9 +61,6 @@ void fixed_xor(byte_string* a, byte_string* b, byte_string* c) {
   }
 }
 
-static size_t NUM_BYTES_TO_XOR = 64;
-byte XOR_BYTES[64] = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz!@#$%^&*() :";
-
 void decrypt_fixed_xor(byte_string* in, byte_string* out, byte* decryption_char) {
   assert(in != NULL);
   assert(out != NULL);
@@ -75,10 +72,10 @@ void decrypt_fixed_xor(byte_string* in, byte_string* out, byte* decryption_char)
   float score_of_best_candidate = INFINITY;
 
   size_t len = in->length;
-  for(size_t i = 0; i < NUM_BYTES_TO_XOR; i++) {
+  for(size_t i = 0; i < 255; i++) {
     // repeat the single byte to the same length as the input
     byte single_byte_buffer[len];
-    memset(single_byte_buffer, XOR_BYTES[i], len * sizeof(byte));
+    memset(single_byte_buffer, (byte) i, len * sizeof(byte));
     byte_string single_byte = { len, single_byte_buffer };
 
     // allocate memory for the result
@@ -99,12 +96,12 @@ void decrypt_fixed_xor(byte_string* in, byte_string* out, byte* decryption_char)
 
   // repeat the single byte
   byte single_byte_buffer[len];
-  memset(single_byte_buffer, XOR_BYTES[index_of_best_candidate], len * sizeof(byte));
+  memset(single_byte_buffer, (byte)index_of_best_candidate, len * sizeof(byte));
   byte_string single_byte = { len, single_byte_buffer };
 
   // xor it to the output variable
   fixed_xor(in, &single_byte, out);
-  *decryption_char = XOR_BYTES[index_of_best_candidate];
+  *decryption_char = (byte)index_of_best_candidate;
 
 }
 
@@ -222,12 +219,6 @@ void detect_single_character_xor(byte_string* byte_strings, size_t num_byte_stri
     } else {
       free(decrypted_buffer);
     }
-
-    printf("=======================================\n");
-    print_bytes_hex(&byte_strings[i]);
-    print_bytes_hex(&decrypted);
-    print_bytes_ascii(&decrypted);
-    printf("=======================================\n");
   }
 
   out->length = best_candidate.length;
