@@ -29,4 +29,6 @@ void free_byte_string(byte_string* self);
 
 void free_byte_strings(byte_string* byte_strings, size_t len);
 
+int hamming_distance(byte_string* a, byte_string* b);
+
 #endif

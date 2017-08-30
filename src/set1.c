@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "byte_string.h"
 #include "set1.h"
 
 void fixed_xor(byte_string* a, byte_string* b, byte_string* c) {

@@ -210,3 +210,25 @@ void free_byte_strings(byte_string* byte_strings, size_t len) {
   }
   free(byte_strings);
 }
+
+int hamming_distance(byte_string* a, byte_string* b) {
+  assert(a != NULL);
+  assert(b != NULL);
+  assert(a->length >= 0);
+  assert(a->length == b->length);
+
+  int result = 0;
+  for(size_t i = 0; i < a->length; i++) {
+    // if the bits are the same, xor will make them 0
+    byte non_equal_bits = a->buffer[i] ^ b->buffer[i];
+
+    // count the bits that are differing
+    while(non_equal_bits > 0) {
+      if((non_equal_bits & 0x01) == 1) {
+        result++;
+      }
+      non_equal_bits = non_equal_bits >> 1;
+    }
+  }
+  return result;
+}

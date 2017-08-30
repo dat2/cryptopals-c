@@ -1,6 +1,7 @@
 #ifndef SET_1_H
 #define SET_1_H
 
+#include "byte_string.h"
 #include "utils.h"
 
 // challenge 2
