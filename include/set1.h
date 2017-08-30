@@ -3,16 +3,13 @@
 
 #include "utils.h"
 
-// challenge 1
-void to_base64(byte_string* self, char* out);
-
 // challenge 2
 void fixed_xor(byte_string* a, byte_string* b, byte_string* c);
 
 // challenge 3
 void decrypt_fixed_xor(byte_string* in, byte_string* out, byte* decryption_char);
 
-typedef struct {
+typedef struct letter_distribution {
   int count[26];
   int penalty;
   int total;

@@ -1,4 +1,5 @@
 #include <assert.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -91,6 +92,85 @@ void to_ascii(byte_string* self, char* out) {
     }
     snprintf(out + index, num_bytes + 1, "%s", args);
     index += num_bytes;
+  }
+}
+
+static char index_to_char(byte index) {
+  if(index < 26) {
+    return 'A' + index;
+  } else if(index < 52) {
+    return 'a' + (index - 26);
+  } else if(index < 62) {
+    return '0' + (index - 52);
+  } else if (index == 62) {
+    return '+';
+  } else if (index == 63) {
+    return '/';
+  } else {
+    return '=';
+  }
+}
+
+void to_base64(byte_string* self, char* out) {
+  assert(self != NULL);
+  assert(out != NULL);
+  assert(self->length >= 0);
+
+  for(size_t i = 0, j = 0; i < self->length; i += 3, j += 4) {
+    bool has_one_byte = (i + 1) >= self->length;
+    bool has_two_bytes = (i + 2) >= self->length;
+
+    byte first_octet = self->buffer[i];
+    byte second_octet = has_one_byte ? 0 : self->buffer[i + 1];
+    byte third_octet = has_two_bytes ? 0 : self->buffer[i + 2];
+
+    byte first = first_octet >> 2;
+    byte second = ((first_octet & 0x03) << 4) ^ (second_octet >> 4);
+    byte third = has_one_byte ? 64 : ((second_octet & 0x0F) << 2) ^ (third_octet >> 6);
+    byte fourth = (has_one_byte || has_two_bytes) ? 64 : (third_octet & 0x3F);
+
+    out[j] = index_to_char(first);
+    out[j + 1] = index_to_char(second);
+    out[j + 2] = index_to_char(third);
+    out[j + 3] = index_to_char(fourth);
+  }
+}
+
+static byte char_to_index(char c) {
+  if(c >= 'A' && c <= 'Z') {
+    return (byte)(c - 'A');
+  } else if(c >= 'a' && c <= 'z') {
+    return (byte)(c - 'a') + 26;
+  } else if(c >= '0' && c <= '9') {
+    return (byte)(c - '0') + 52;
+  } else if(c == '+') {
+    return 62;
+  } else if(c == '/') {
+    return 63;
+  } else if(c == '=') {
+    return 0;
+  } else {
+    return (byte) -1;
+  }
+}
+
+void from_base64(byte_string* self, char* base64) {
+  assert(self != NULL);
+  assert(base64 != NULL);
+
+  for(size_t i = 0, j = 0; j < self->length; i += 4, j += 3) {
+    byte first_encoded = char_to_index(base64[i]);
+    byte second_encoded = char_to_index(base64[i + 1]);
+    byte third_encoded = char_to_index(base64[i + 2]);
+    byte fourth_encoded = char_to_index(base64[i + 3]);
+
+    byte first_octet = (first_encoded << 2) ^ (second_encoded >> 4);
+    byte second_octet = ((second_encoded & 0x0F) << 4) ^ (third_encoded >> 2);
+    byte third_octet = ((third_encoded & 0x03) << 6) ^ fourth_encoded;
+
+    self->buffer[j] = first_octet;
+    self->buffer[j + 1] = second_octet;
+    self->buffer[j + 2] = third_octet;
   }
 }
 
@@ -244,6 +324,77 @@ byte_string* read_lines_hex(char* file_name, size_t* n_lines) {
   }
   // free the lines
   free(lines);
+
+  return result;
+}
+
+char* strip_newlines(char* buffer) {
+  char* result = NULL;
+  char delim[2] = "\n";
+  char* line = NULL;
+  size_t result_length = 0;
+  size_t line_length = 0;
+
+  // allocate a single byte
+  result = (char*) malloc(sizeof(char));
+  if(result == NULL) {
+    exit(-3);
+    return NULL;
+  }
+
+  // start finding lines
+  line = strtok(buffer, delim);
+  while(line != NULL) {
+    line_length = strlen(line);
+
+    // reallocate result
+    result = (char*) realloc(result, sizeof(char) * (result_length + line_length + 1));
+    if(result == NULL) {
+      exit(-3);
+      return NULL;
+    }
+
+    // copy line into the result
+    strncpy(result + result_length, line, line_length);
+    result += line_length;
+
+    // get the next line
+    line = strtok(NULL, delim);
+  }
+  result[result_length] = '\0';
+
+  return result;
+}
+
+byte_string* read_file_base64(char* file_name) {
+  // read the file into a buffer
+  long file_size;
+  char* file_buffer = read_file(file_name, &file_size);
+
+  // remove the newlines
+  char* base64 = strip_newlines(file_buffer);
+  free(file_buffer);
+
+  printf("%s\n", base64);
+
+  // calculate the length of the string
+  size_t length = strlen(base64);
+
+  // malloc the byte string
+  byte_string* result = (byte_string*) malloc(sizeof(byte_string));
+  if(result == NULL) {
+    exit(-3);
+    return NULL;
+  }
+  result->length = (length / 4) * 3;
+
+  // malloc the buffer
+  result->buffer = (byte*) calloc(result->length, sizeof(byte));
+  if(result->buffer == NULL) {
+    exit(-3);
+    return NULL;
+  }
+  from_base64(result, base64);
 
   return result;
 }

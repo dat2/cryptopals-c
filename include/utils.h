@@ -8,7 +8,7 @@
 
 typedef unsigned char byte;
 
-typedef struct {
+typedef struct byte_string {
   size_t length;
   byte* buffer;
 } byte_string;
@@ -20,6 +20,11 @@ void to_hex(byte_string* self, char* out);
 void from_ascii(byte_string* self, char* ascii);
 
 void to_ascii(byte_string* self, char* out);
+
+// challenge 1
+void to_base64(byte_string* self, char* out);
+
+void from_base64(byte_string* self, char* base64);
 
 void print_bytes_hex(byte_string* self);
 
@@ -34,5 +39,9 @@ char* read_file(char* file_name, long* file_size);
 char** split_lines(char* buffer, size_t* n_lines);
 
 byte_string* read_lines_hex(char* file_name, size_t* n_lines);
+
+char* strip_newlines(char* buffer);
+
+byte_string* read_file_base64(char* file_name);
 
 #endif
