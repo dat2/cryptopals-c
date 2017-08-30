@@ -122,7 +122,14 @@ static void challenge6() {
   char file_name[11] = "data/6.txt";
   byte_string* input = read_file_base64(file_name);
 
-  char* actual = calloc(input->length, sizeof(char));
+  byte_string key = { 0, NULL };
+  byte_string out = { 0, NULL };
+
+  break_repeating_key_xor(input, &key, &out);
+
+  char* actual = calloc(out.length, sizeof(char));
+  to_ascii(&out, actual);
+
   char* expected = "";
 
   printf("challenge 6:\n");

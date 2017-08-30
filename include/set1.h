@@ -30,4 +30,12 @@ void detect_single_character_xor(byte_string* byte_strings, size_t num_byte_stri
 // challenge 5
 void encrypt_repeating_key_xor(byte_string* input, byte_string* key, byte_string* out);
 
+// challenge 6
+void break_repeating_key_xor(byte_string* input, byte_string* key, byte_string* out);
+
+typedef struct xor_key {
+  size_t key_size;
+  float normalized_edit_distance;
+} xor_key;
+
 #endif

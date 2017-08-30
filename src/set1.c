@@ -202,3 +202,49 @@ void encrypt_repeating_key_xor(byte_string* input, byte_string* key, byte_string
   // xor the input with the repeated string
   fixed_xor(input, &repeated_key, out);
 }
+
+static int compare_xor_keys(const void* a, const void* b) {
+  if( ((xor_key*) a)->normalized_edit_distance < ((xor_key*) b)->normalized_edit_distance ) { return -1; }
+  else if( ((xor_key*) a)->normalized_edit_distance == ((xor_key*) b)->normalized_edit_distance ) { return 0; }
+  else { return 1; }
+}
+
+void break_repeating_key_xor(byte_string* input, byte_string* key, byte_string* out) {
+  xor_key xor_keys[38];
+
+  for(size_t key_size = 2; key_size < 40; key_size++) {
+    // take the first KEY_SIZE of bytes
+    byte first_bytes_buffer[key_size];
+    byte_string first_bytes = { key_size, first_bytes_buffer };
+    memcpy(first_bytes_buffer, input->buffer, key_size);
+
+    // take the second KEY_SIZE of bytes
+    byte second_bytes_buffer[key_size];
+    byte_string second_bytes = { key_size, second_bytes_buffer };
+    memcpy(second_bytes_buffer, input->buffer + key_size, key_size);
+
+    // find the edit distance, normalize this result
+    int edit_distance = hamming_distance(&first_bytes, &second_bytes);
+    float normalized_edit_distance = ((float) edit_distance) / ((float) key_size);
+
+    xor_keys[key_size - 2].key_size = key_size;
+    xor_keys[key_size - 2].normalized_edit_distance = normalized_edit_distance;
+  }
+
+  // sort the key sizes in ascending order
+  qsort(xor_keys, 38, sizeof(xor_key), compare_xor_keys);
+
+  // guess a key for each keysize
+  for(size_t i = 0; i < 38; i++) {
+    size_t key_size = xor_keys[i].key_size;
+
+    byte key_buffer[key_size];
+    memset(key_buffer, 0, key_size);
+    byte_string key = { key_size, key_buffer };
+
+    // for each character of the key, solve a transposed block
+    for(size_t k = 0; k < key_size; k++) {
+
+    }
+  }
+}
