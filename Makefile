@@ -3,19 +3,19 @@ BUILD = build
 SRC = src
 
 CC = gcc
-CFLAGS = -I$(INCLUDE) -Wall
+CFLAGS = -g -I$(INCLUDE) -Wall
 
-_DEPS = set1.h utils.h
+_DEPS = byte_string.h set1.h utils.h
 DEPS = $(patsubst %,$(INCLUDE)/%,$(_DEPS))
 
-_OBJ = utils.o set1.o cryptopals.o
+_OBJ = byte_string.o set1.o utils.o cryptopals.o
 OBJ = $(patsubst %,$(BUILD)/%,$(_OBJ))
 
 $(BUILD)/%.o: $(SRC)/%.c $(DEPS)
-	$(CC) -c -o $@ $< $(CFLAGS)
+	$(CC) $(CFLAGS) -c -o $@ $<
 
 $(BUILD)/cryptopals: $(OBJ)
-	gcc -o $@ $^ $(CFLAGS)
+	$(CC) $(CFLAGS) -o $@ $^
 
 .PHONY: clean
 
