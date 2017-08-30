@@ -43,6 +43,15 @@ void to_hex(byte_string* self, char* out) {
   }
 }
 
+void from_ascii(byte_string* self, char* ascii) {
+  assert(self != NULL);
+  assert(ascii != NULL);
+
+  for(size_t i = 0; i < self->length; i++) {
+    self->buffer[i] = (byte) ascii[i];
+  }
+}
+
 static char num_to_hex(byte b) {
   if(b >= 0 && b <= 9) {
     return (char) (b + '0');
@@ -99,10 +108,10 @@ void print_bytes_ascii(byte_string* self) {
   assert(self != NULL);
   assert(self->length >= 0);
 
-  char ascii[self->length * 5];
-  memset(ascii, 0, self->length * 5);
-  to_ascii(self, ascii);
-  printf("b'%s'\n", ascii);
+  char string[self->length * 5];
+  memset(string, 0, self->length * 5);
+  to_ascii(self, string);
+  printf("b'%s'\n", string);
 }
 
 void free_byte_string(byte_string* self) {

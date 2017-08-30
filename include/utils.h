@@ -1,6 +1,11 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#define min(a,b) \
+ ({ __typeof__ (a) _a = (a); \
+     __typeof__ (b) _b = (b); \
+   _a < _b ? _a : _b; })
+
 typedef unsigned char byte;
 
 typedef struct {
@@ -11,6 +16,8 @@ typedef struct {
 void from_hex(byte_string* self, char* hex);
 
 void to_hex(byte_string* self, char* out);
+
+void from_ascii(byte_string* self, char* ascii);
 
 void to_ascii(byte_string* self, char* out);
 

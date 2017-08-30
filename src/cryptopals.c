@@ -93,6 +93,31 @@ static void challenge4() {
   free_byte_strings(byte_strings, n_byte_strings);
 }
 
+static void challenge5() {
+  char input_ascii[76] = "Burning 'em, if you ain't quick and nimble\nI go crazy when I hear a cymbal";
+  char key_ascii[4] = "ICE";
+
+  byte input_buffer[74] = {0};
+  byte_string input = { 74, input_buffer };
+  byte key_buffer[3] = {0};
+  byte_string key = { 3, key_buffer };
+
+  byte out_buffer[74] = {0};
+  byte_string out = { 74, out_buffer };
+  char out_hex[149] = {0};
+
+  from_ascii(&input, input_ascii);
+  from_ascii(&key, key_ascii);
+  encrypt_repeating_key_xor(&input, &key, &out);
+  to_hex(&out, out_hex);
+  char* expected = "0b3637272a2b2e63622c2e69692a23693a2a3c6324202d623d63343c2a26226324272765272a282b2f20430a652e2c652a3124333a653e2b2027630c692b20283165286326302e27282f";
+
+  printf("challenge 2:\n");
+  printf("expected: %s\n", expected);
+  printf("actual  : %s\n", out_hex);
+  printf("expected == actual: %s\n", strcmp(expected, out_hex) == 0 ? "true" : "false");
+}
+
 int main(int argc, char** argv) {
   setlocale(LC_ALL, "");
 
@@ -103,6 +128,8 @@ int main(int argc, char** argv) {
   challenge3();
   printf("\n");
   challenge4();
+  printf("\n");
+  challenge5();
 
   return 0;
 }

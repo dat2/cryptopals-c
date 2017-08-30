@@ -29,4 +29,7 @@ float score(byte_string* in);
 // challenge 4
 void detect_single_character_xor(byte_string* byte_strings, size_t num_byte_strings, byte_string* out);
 
+// challenge 5
+void encrypt_repeating_key_xor(byte_string* input, byte_string* key, byte_string* out);
+
 #endif

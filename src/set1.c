@@ -166,7 +166,7 @@ float error(letter_distribution* self) {
   float result = 0;
   for(size_t i = 0; i < 26; i++) {
     float frequency = (float)(self->count[i]) / (float)(self->total);
-    result += fabs( frequency - ENGLISH_LETTER_FREQUENCIES[i] );
+    result += fabs(frequency - ENGLISH_LETTER_FREQUENCIES[i]);
   }
   result += (float) self->penalty;
   return result;
@@ -223,4 +223,23 @@ void detect_single_character_xor(byte_string* byte_strings, size_t num_byte_stri
 
   out->length = best_candidate.length;
   out->buffer = best_candidate.buffer;
+}
+
+void encrypt_repeating_key_xor(byte_string* input, byte_string* key, byte_string* out) {
+  assert(input != NULL);
+  assert(key != NULL);
+  assert(out != NULL);
+  assert(input->length >= 0);
+  assert(input->length == out->length);
+  assert(key->length >= 0);
+
+  // create a repeated key byte string
+  byte buffer[input->length];
+  byte_string repeated_key = { input->length, buffer };
+  for(size_t index = 0; index < input->length; index += key->length) {
+    memcpy(buffer + index, key->buffer, min(key->length, input->length - index));
+  }
+
+  // xor the input with the repeated string
+  fixed_xor(input, &repeated_key, out);
 }
