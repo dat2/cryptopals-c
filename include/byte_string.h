@@ -8,27 +8,32 @@ typedef struct byte_string {
   byte* buffer;
 } byte_string;
 
-void from_hex(byte_string* self, char* hex);
+// construction
+byte_string* new_byte_string(size_t len);
 
-void to_hex(byte_string* self, char* out);
+byte_string* from_hex(const char* hex);
 
-void from_ascii(byte_string* self, char* ascii);
+byte_string* from_ascii(const char* ascii);
 
-void to_ascii(byte_string* self, char* out);
+byte_string* from_base64(const char* base64);
 
-// challenge 1
-void to_base64(byte_string* self, char* out);
+byte_string* repeat_byte(size_t len, byte b);
 
-void from_base64(byte_string* self, char* base64);
+// extract
+char* to_hex(byte_string* self);
 
-void print_bytes_hex(byte_string* self);
+char* to_ascii(byte_string* self);
 
-void print_bytes_ascii(byte_string* self);
+char* to_base64(byte_string* self);
 
-void free_byte_string(byte_string* self);
+byte_string* substring(byte_string* self, size_t start, size_t end);
 
-void free_byte_strings(byte_string* byte_strings, size_t len);
-
+// util operations
 int hamming_distance(byte_string* a, byte_string* b);
+
+byte_string* fixed_xor(byte_string* a, byte_string* b);
+
+// destruction
+void free_byte_string(byte_string** self);
 
 #endif

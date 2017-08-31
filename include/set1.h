@@ -4,11 +4,8 @@
 #include "byte_string.h"
 #include "utils.h"
 
-// challenge 2
-void fixed_xor(byte_string* a, byte_string* b, byte_string* c);
-
 // challenge 3
-void decrypt_fixed_xor(byte_string* in, byte_string* out, byte* decryption_char);
+byte_string* decrypt_fixed_xor(byte_string* in, byte* decryption_char);
 
 typedef struct letter_distribution {
   int count[26];
@@ -25,13 +22,13 @@ float error(letter_distribution* self);
 float score(byte_string* in);
 
 // challenge 4
-void detect_single_character_xor(byte_string* byte_strings, size_t num_byte_strings, byte_string* out);
+byte_string* detect_single_character_xor(byte_string** byte_strings, size_t num_byte_strings);
 
 // challenge 5
-void encrypt_repeating_key_xor(byte_string* input, byte_string* key, byte_string* out);
+byte_string* encrypt_repeating_key_xor(byte_string* input, byte_string* key);
 
 // challenge 6
-void break_repeating_key_xor(byte_string* input, byte_string* key, byte_string* out);
+byte_string* break_repeating_key_xor(byte_string* input);
 
 typedef struct xor_key {
   size_t key_size;

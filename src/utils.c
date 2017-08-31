@@ -82,43 +82,31 @@ char** split_lines(char* buffer, size_t* n_lines) {
   }
   *n_lines = num_lines;
 
+  free(buffer);
+
   return lines;
 }
 
-byte_string* read_lines_hex(char* file_name, size_t* n_lines) {
+byte_string** read_lines_hex(char* file_name, size_t* n_lines) {
   // read the file into a buffer
   long file_size;
   char* file_buffer = read_file(file_name, &file_size);
 
   // split the lines, free the file buffer memory
   char** lines = split_lines(file_buffer, n_lines);
-  free(file_buffer);
 
   // allocate memory for the result array
-  byte_string* result = (byte_string*) calloc(*n_lines, sizeof(byte_string));
+  byte_string** result = (byte_string**) calloc(*n_lines, sizeof(byte_string*));
   if(result == NULL) {
     exit(-3);
     return NULL;
   }
 
+  // generate byte strings from the character strings :)
   for(size_t i = 0; i < *n_lines; i++) {
-    // allocate the byte array
-    size_t line_length = strlen(lines[i]);
-    byte* line = (byte*) calloc(line_length / 2, sizeof(byte));
-    if(line == NULL) {
-      exit(-3);
-      return NULL;
-    }
-    result[i].length = line_length / 2;
-    result[i].buffer = line;
-
-    // interpret the hex line as bytes
-    from_hex(&result[i], lines[i]);
-
-    // free the line
+    result[i] = from_hex(lines[i]);
     free(lines[i]);
   }
-  // free the lines
   free(lines);
 
   return result;
@@ -158,6 +146,7 @@ char* strip_newlines(char* buffer) {
     line = strtok(NULL, delim);
   }
   result[result_length] = '\0';
+  free(buffer);
 
   return result;
 }
@@ -169,26 +158,8 @@ byte_string* read_file_base64(char* file_name) {
 
   // remove the newlines
   char* base64 = strip_newlines(file_buffer);
-  free(file_buffer);
 
-  // calculate the length of the string
-  size_t length = strlen(base64);
-
-  // malloc the byte string
-  byte_string* result = (byte_string*) malloc(sizeof(byte_string));
-  if(result == NULL) {
-    exit(-3);
-    return NULL;
-  }
-  result->length = (length / 4) * 3;
-
-  // malloc the buffer
-  result->buffer = (byte*) calloc(result->length, sizeof(byte));
-  if(result->buffer == NULL) {
-    exit(-3);
-    return NULL;
-  }
-  from_base64(result, base64);
-
+  byte_string* result = from_base64(base64);
+  free(base64);
   return result;
 }

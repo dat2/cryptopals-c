@@ -7,61 +7,43 @@
 #include "byte_string.h"
 #include "set1.h"
 
-void fixed_xor(byte_string* a, byte_string* b, byte_string* c) {
-  assert(a != NULL);
-  assert(b != NULL);
-  assert(c != NULL);
-  assert(a->length >= 0);
-  assert(a->length == b->length);
-  assert(a->length == c->length);
-
-  for(size_t i = 0; i < a->length; i++) {
-    c->buffer[i] = a->buffer[i] ^ b->buffer[i];
-  }
-}
-
-void decrypt_fixed_xor(byte_string* in, byte_string* out, byte* decryption_char) {
+byte_string* decrypt_fixed_xor(byte_string* in, byte* decryption_char) {
   assert(in != NULL);
-  assert(out != NULL);
   assert(decryption_char != NULL);
   assert(in->length >= 0);
-  assert(in->length == out->length);
 
-  size_t index_of_best_candidate = 0;
   float score_of_best_candidate = INFINITY;
+  byte_string* best_candidate = NULL;
 
   size_t len = in->length;
   for(size_t i = 0; i < 255; i++) {
     // repeat the single byte to the same length as the input
-    byte single_byte_buffer[len];
-    memset(single_byte_buffer, (byte) i, len * sizeof(byte));
-    byte_string single_byte = { len, single_byte_buffer };
-
-    // allocate memory for the result
-    byte decrypted_buffer[len];
-    memset(decrypted_buffer, 0, len * sizeof(byte));
-    byte_string decrypted = { len, decrypted_buffer };
+    byte_string* single_byte = repeat_byte(len, (byte) i);
 
     // calculate the xor
-    fixed_xor(in, &single_byte, &decrypted);
+    byte_string* decrypted = fixed_xor(in, single_byte);
 
-    // get the score of the result
-    float score_candidate = score(&decrypted);
+    float score_candidate = score(decrypted);
     if(score_candidate <= score_of_best_candidate) {
-      index_of_best_candidate = i;
+      // clear previously stored memory
+      if(best_candidate != NULL) {
+        free_byte_string(&best_candidate);
+      }
+
+      // update the best candidate & decryption char
+      *decryption_char = (byte) i;
+      best_candidate = decrypted;
       score_of_best_candidate = score_candidate;
+    } else {
+      free_byte_string(&decrypted);
     }
+
+    // free the repeated single byte
+    free_byte_string(&single_byte);
   }
+  assert(best_candidate != NULL);
 
-  // repeat the single byte
-  byte single_byte_buffer[len];
-  memset(single_byte_buffer, (byte)index_of_best_candidate, len * sizeof(byte));
-  byte_string single_byte = { len, single_byte_buffer };
-
-  // xor it to the output variable
-  fixed_xor(in, &single_byte, out);
-  *decryption_char = (byte)index_of_best_candidate;
-
+  return best_candidate;
 }
 
 letter_distribution new_distribution() {
@@ -142,54 +124,42 @@ float score(byte_string* in) {
   return error(&distribution);
 }
 
-void detect_single_character_xor(byte_string* byte_strings, size_t num_byte_strings, byte_string* out) {
+byte_string* detect_single_character_xor(byte_string** byte_strings, size_t num_byte_strings) {
   assert(byte_strings != NULL);
   assert(num_byte_strings >= 0);
-  assert(out != NULL);
 
-  size_t index_of_best_candidate = 0;
   float score_of_best_candidate = INFINITY;
-  byte_string best_candidate;
+  byte_string* best_candidate = NULL;
 
   for(size_t i = 0; i < num_byte_strings; i++) {
-    assert(byte_strings[i].length >= 0);
-
-    // first, allocate size for the decrypted version
-    byte* decrypted_buffer = (byte*) calloc(byte_strings[i].length, sizeof(byte));
-    if(decrypted_buffer == NULL) {
-      exit(-3);
-      return;
-    }
-    byte_string decrypted = { byte_strings[i].length, decrypted_buffer };
+    assert(byte_strings[i]->length >= 0);
 
     // find the best decryption for this line of bytes
     byte decryption_char;
-    decrypt_fixed_xor(&byte_strings[i], &decrypted, &decryption_char);
+    byte_string* decrypted = decrypt_fixed_xor(byte_strings[i], &decryption_char);
 
     // check the score of this line again
-    float score_candidate = score(&decrypted);
+    float score_candidate = score(decrypted);
     if(score_candidate < score_of_best_candidate) {
-      index_of_best_candidate = i;
       score_of_best_candidate = score_candidate;
 
-      best_candidate.length = byte_strings[i].length;
-      best_candidate.buffer = decrypted_buffer;
-
+      // move the buffer into the best candidate
+      if(best_candidate != NULL) {
+        free_byte_string(&best_candidate);
+      }
+      best_candidate = decrypted;
     } else {
-      free(decrypted_buffer);
+      free_byte_string(&decrypted);
     }
   }
 
-  out->length = best_candidate.length;
-  out->buffer = best_candidate.buffer;
+  return best_candidate;
 }
 
-void encrypt_repeating_key_xor(byte_string* input, byte_string* key, byte_string* out) {
+byte_string* encrypt_repeating_key_xor(byte_string* input, byte_string* key) {
   assert(input != NULL);
   assert(key != NULL);
-  assert(out != NULL);
   assert(input->length >= 0);
-  assert(input->length == out->length);
   assert(key->length >= 0);
 
   // create a repeated key byte string
@@ -200,7 +170,7 @@ void encrypt_repeating_key_xor(byte_string* input, byte_string* key, byte_string
   }
 
   // xor the input with the repeated string
-  fixed_xor(input, &repeated_key, out);
+  return fixed_xor(input, &repeated_key);
 }
 
 static int compare_xor_keys(const void* a, const void* b) {
@@ -209,42 +179,83 @@ static int compare_xor_keys(const void* a, const void* b) {
   else { return 1; }
 }
 
-void break_repeating_key_xor(byte_string* input, byte_string* key, byte_string* out) {
+byte_string* break_repeating_key_xor(byte_string* input) {
+  assert(input != NULL);
+  assert(input->length >= 0);
+
   xor_key xor_keys[38];
 
   for(size_t key_size = 2; key_size < 40; key_size++) {
     // take the first KEY_SIZE of bytes
-    byte first_bytes_buffer[key_size];
-    byte_string first_bytes = { key_size, first_bytes_buffer };
-    memcpy(first_bytes_buffer, input->buffer, key_size);
+    byte_string* first_bytes = substring(input, 0, key_size);
 
     // take the second KEY_SIZE of bytes
-    byte second_bytes_buffer[key_size];
-    byte_string second_bytes = { key_size, second_bytes_buffer };
-    memcpy(second_bytes_buffer, input->buffer + key_size, key_size);
+    byte_string* second_bytes = substring(input, key_size, key_size * 2);
 
     // find the edit distance, normalize this result
-    int edit_distance = hamming_distance(&first_bytes, &second_bytes);
+    int edit_distance = hamming_distance(first_bytes, second_bytes);
     float normalized_edit_distance = ((float) edit_distance) / ((float) key_size);
 
     xor_keys[key_size - 2].key_size = key_size;
     xor_keys[key_size - 2].normalized_edit_distance = normalized_edit_distance;
+
+    free_byte_string(&first_bytes);
+    free_byte_string(&second_bytes);
   }
 
   // sort the key sizes in ascending order
   qsort(xor_keys, 38, sizeof(xor_key), compare_xor_keys);
 
+  // make a list of output candidates
+  byte_string* output_candidates[38];
+
   // guess a key for each keysize
   for(size_t i = 0; i < 38; i++) {
     size_t key_size = xor_keys[i].key_size;
+    size_t transposed_size = input->length / key_size;
 
-    byte key_buffer[key_size];
-    memset(key_buffer, 0, key_size);
-    byte_string key = { key_size, key_buffer };
+    byte_string* key = new_byte_string(key_size);
 
     // for each character of the key, solve a transposed block
     for(size_t k = 0; k < key_size; k++) {
+      // copy the input into the transposed buffer
+      byte_string* transposed = new_byte_string(transposed_size);
+      for(size_t j = 0; j < transposed_size; j++) {
+        transposed->buffer[j] = input->buffer[(j * key_size) + k];
+      }
 
+      // decoded
+      byte decrypted_char;
+      byte_string* decoded = decrypt_fixed_xor(transposed, &decrypted_char);
+      key->buffer[k] = decrypted_char;
+
+      free_byte_string(&decoded);
+      free_byte_string(&transposed);
+    }
+
+    // decrypt the repeating key xor
+    output_candidates[i] = encrypt_repeating_key_xor(input, key);
+    free_byte_string(&key);
+  }
+
+  float score_of_best_candidate = INFINITY;
+  byte_string* best_candidate = NULL;
+
+  for(size_t i = 0; i < 38; i++) {
+    // check the score of this line again
+    float score_candidate = score(output_candidates[i]);
+    if(score_candidate < score_of_best_candidate) {
+      score_of_best_candidate = score_candidate;
+
+      // move the buffer into the best candidate
+      if(best_candidate != NULL) {
+        free_byte_string(&best_candidate);
+      }
+      best_candidate = output_candidates[i];
+    } else {
+      free_byte_string(&output_candidates[i]);
     }
   }
+
+  return best_candidate;
 }

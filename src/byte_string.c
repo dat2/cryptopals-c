@@ -6,6 +6,25 @@
 
 #include "byte_string.h"
 
+// construction
+byte_string* new_byte_string(size_t len) {
+  // malloc buffer
+  byte* buffer = (byte*) calloc(len, sizeof(byte));
+  if(buffer == NULL) {
+    exit(-3);
+    return NULL;
+  }
+  // malloc result
+  byte_string* result = malloc(sizeof(byte_string));
+  if(result == NULL) {
+    exit(-3);
+    return NULL;
+  }
+  result->length = len;
+  result->buffer = buffer;
+  return result;
+}
+
 static byte hex_to_num(char c) {
   if(c >= '0' && c <= '9') {
     return (byte)(c - '0');
@@ -25,32 +44,88 @@ static byte bytes_for_hex(char first, char second) {
   return result;
 }
 
-void from_hex(byte_string* self, char* hex) {
-  assert(self != NULL);
+byte_string* from_hex(const char* hex) {
   assert(hex != NULL);
 
+  byte_string* self = new_byte_string(strlen(hex) / 2);
   for(size_t i = 0, j = 0; i < self->length * 2; i += 2, j++) {
     byte b = bytes_for_hex(hex[i], hex[i + 1]);
     self->buffer[j] = b;
   }
+  return self;
 }
 
-void to_hex(byte_string* self, char* out) {
+byte_string* from_ascii(const char* ascii) {
+  assert(ascii != NULL);
+
+  byte_string* self = new_byte_string(strlen(ascii));
+  for(size_t i = 0; i < self->length; i++) {
+    self->buffer[i] = (byte) ascii[i];
+  }
+  return self;
+}
+
+static byte char_to_index(char c) {
+  if(c >= 'A' && c <= 'Z') {
+    return (byte)(c - 'A');
+  } else if(c >= 'a' && c <= 'z') {
+    return (byte)(c - 'a') + 26;
+  } else if(c >= '0' && c <= '9') {
+    return (byte)(c - '0') + 52;
+  } else if(c == '+') {
+    return 62;
+  } else if(c == '/') {
+    return 63;
+  } else if(c == '=') {
+    return 0;
+  } else {
+    return (byte) -1;
+  }
+}
+
+byte_string* from_base64(const char* base64) {
+  assert(base64 != NULL);
+
+  byte_string* self = new_byte_string((strlen(base64) / 4) * 3);
+  for(size_t i = 0, j = 0; j < self->length; i += 4, j += 3) {
+    byte first_encoded = char_to_index(base64[i]);
+    byte second_encoded = char_to_index(base64[i + 1]);
+    byte third_encoded = char_to_index(base64[i + 2]);
+    byte fourth_encoded = char_to_index(base64[i + 3]);
+
+    byte first_octet = (first_encoded << 2) ^ (second_encoded >> 4);
+    byte second_octet = ((second_encoded & 0x0F) << 4) ^ (third_encoded >> 2);
+    byte third_octet = ((third_encoded & 0x03) << 6) ^ fourth_encoded;
+
+    self->buffer[j] = first_octet;
+    self->buffer[j + 1] = second_octet;
+    self->buffer[j + 2] = third_octet;
+  }
+  return self;
+}
+
+byte_string* repeat_byte(size_t len, byte b) {
+  byte_string* result = new_byte_string(len);
+  for(size_t i = 0; i < len; i++) {
+    result->buffer[i] = b;
+  }
+  return result;
+}
+
+// extract
+char* to_hex(byte_string* self) {
   assert(self != NULL);
-  assert(out != NULL);
+
+  char* out = (char*) calloc(self->length * 2, sizeof(char));
+  if(out == NULL) {
+    exit(-3);
+    return NULL;
+  }
 
   for(size_t i = 0; i < self->length; i++) {
     snprintf(out + (i * 2), 3, "%02x", self->buffer[i]);
   }
-}
-
-void from_ascii(byte_string* self, char* ascii) {
-  assert(self != NULL);
-  assert(ascii != NULL);
-
-  for(size_t i = 0; i < self->length; i++) {
-    self->buffer[i] = (byte) ascii[i];
-  }
+  return out;
 }
 
 static char num_to_hex(byte b) {
@@ -63,9 +138,14 @@ static char num_to_hex(byte b) {
   }
 }
 
-void to_ascii(byte_string* self, char* out) {
+char* to_ascii(byte_string* self) {
   assert(self != NULL);
-  assert(out != NULL);
+
+  char* out = (char*) calloc(self->length * 5, sizeof(char));
+  if(out == NULL) {
+    exit(-3);
+    return NULL;
+  }
 
   size_t index = 0;
   for(size_t i = 0; i < self->length; i++) {
@@ -93,6 +173,8 @@ void to_ascii(byte_string* self, char* out) {
     snprintf(out + index, num_bytes + 1, "%s", args);
     index += num_bytes;
   }
+
+  return out;
 }
 
 static char index_to_char(byte index) {
@@ -111,10 +193,15 @@ static char index_to_char(byte index) {
   }
 }
 
-void to_base64(byte_string* self, char* out) {
+char* to_base64(byte_string* self) {
   assert(self != NULL);
-  assert(out != NULL);
   assert(self->length >= 0);
+
+  char* out = calloc(self->length * 4 / 3, sizeof(char));
+  if(out == NULL) {
+    exit(-3);
+    return NULL;
+  }
 
   for(size_t i = 0, j = 0; i < self->length; i += 3, j += 4) {
     bool has_one_byte = (i + 1) >= self->length;
@@ -134,83 +221,22 @@ void to_base64(byte_string* self, char* out) {
     out[j + 2] = index_to_char(third);
     out[j + 3] = index_to_char(fourth);
   }
+
+  return out;
 }
 
-static byte char_to_index(char c) {
-  if(c >= 'A' && c <= 'Z') {
-    return (byte)(c - 'A');
-  } else if(c >= 'a' && c <= 'z') {
-    return (byte)(c - 'a') + 26;
-  } else if(c >= '0' && c <= '9') {
-    return (byte)(c - '0') + 52;
-  } else if(c == '+') {
-    return 62;
-  } else if(c == '/') {
-    return 63;
-  } else if(c == '=') {
-    return 0;
-  } else {
-    return (byte) -1;
-  }
-}
-
-void from_base64(byte_string* self, char* base64) {
-  assert(self != NULL);
-  assert(base64 != NULL);
-
-  for(size_t i = 0, j = 0; j < self->length; i += 4, j += 3) {
-    byte first_encoded = char_to_index(base64[i]);
-    byte second_encoded = char_to_index(base64[i + 1]);
-    byte third_encoded = char_to_index(base64[i + 2]);
-    byte fourth_encoded = char_to_index(base64[i + 3]);
-
-    byte first_octet = (first_encoded << 2) ^ (second_encoded >> 4);
-    byte second_octet = ((second_encoded & 0x0F) << 4) ^ (third_encoded >> 2);
-    byte third_octet = ((third_encoded & 0x03) << 6) ^ fourth_encoded;
-
-    self->buffer[j] = first_octet;
-    self->buffer[j + 1] = second_octet;
-    self->buffer[j + 2] = third_octet;
-  }
-}
-
-void print_bytes_hex(byte_string* self) {
+byte_string* substring(byte_string* self, size_t start, size_t end) {
   assert(self != NULL);
   assert(self->length >= 0);
+  assert(start >= 0 && start < self->length);
+  assert(end >= 0 && end < self->length && end > start);
 
-  char hex[self->length * 2];
-  memset(hex, 0, self->length * 2);
-  to_hex(self, hex);
-  printf("%s\n", hex);
+  byte_string* result = new_byte_string(end - start);
+  memcpy(result->buffer, self->buffer + start, end - start);
+  return result;
 }
 
-void print_bytes_ascii(byte_string* self) {
-  assert(self != NULL);
-  assert(self->length >= 0);
-
-  char string[self->length * 5];
-  memset(string, 0, self->length * 5);
-  to_ascii(self, string);
-  printf("b'%s'\n", string);
-}
-
-void free_byte_string(byte_string* self) {
-  assert(self != NULL);
-  assert(self->buffer != NULL);
-
-  free(self->buffer);
-}
-
-void free_byte_strings(byte_string* byte_strings, size_t len) {
-  assert(byte_strings != NULL);
-  assert(len >= 0);
-
-  for(size_t i = 0; i < len; i++) {
-    free_byte_string(&byte_strings[i]);
-  }
-  free(byte_strings);
-}
-
+// util operations
 int hamming_distance(byte_string* a, byte_string* b) {
   assert(a != NULL);
   assert(b != NULL);
@@ -231,4 +257,31 @@ int hamming_distance(byte_string* a, byte_string* b) {
     }
   }
   return result;
+}
+
+byte_string* fixed_xor(byte_string* a, byte_string* b) {
+  assert(a != NULL);
+  assert(b != NULL);
+  assert(a->length >= 0);
+  assert(a->length == b->length);
+
+  byte_string* c = new_byte_string(a->length);
+  for(size_t i = 0; i < a->length; i++) {
+    c->buffer[i] = a->buffer[i] ^ b->buffer[i];
+  }
+  return c;
+}
+
+// destruction
+void free_byte_string(byte_string** self) {
+  assert(self != NULL);
+  assert((*self) != NULL);
+
+  if((*self)->buffer != NULL) {
+    free((*self)->buffer);
+  }
+  free(*self);
+  *self = NULL;
+
+  assert(*self == NULL);
 }
