@@ -1,25 +1,11 @@
-# c stuff
-build/
+# build stuff
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+
+# binary
+cryptopals
 
 # editors
 .vscode/
-
-# packaging stuff
-Makefile
-Makefile.in
-aclocal.m4
-autom4te.cache/
-autoscan.log
-compile
-config.h
-config.h.in
-config.h.in~
-config.log
-config.status
-configure
-configure.scan
-depcomp
-install-sh
-missing
-src/.deps/
-stamp-h1

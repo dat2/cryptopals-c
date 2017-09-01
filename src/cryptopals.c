@@ -2,9 +2,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <openssl/bio.h>
-#include <openssl/ssl.h>
-#include <openssl/err.h>
+// #include <openssl/bio.h>
+// #include <openssl/ssl.h>
+// #include <openssl/err.h>
 
 #include "byte_string.h"
 #include "set1.h"
