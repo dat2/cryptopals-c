@@ -160,9 +160,8 @@ char* to_ascii(byte_string* self) {
         args[1] = '\\';
       }
     } else if(self->buffer[i] == '\n') {
-      num_bytes = 2;
-      args[0] = '\\';
-      args[1] = 'n';
+      num_bytes = 1;
+      args[0] = (char) self->buffer[i];
     } else {
       num_bytes = 4;
       args[0] = '\\';
