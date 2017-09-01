@@ -1,7 +1,10 @@
-#include <locale.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include <openssl/bio.h>
+#include <openssl/ssl.h>
+#include <openssl/err.h>
 
 #include "byte_string.h"
 #include "set1.h"
@@ -125,7 +128,6 @@ static void challenge6() {
 }
 
 int main(int argc, char** argv) {
-  setlocale(LC_ALL, "");
 
   challenge1();
   printf("\n");
