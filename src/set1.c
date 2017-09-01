@@ -27,7 +27,7 @@ byte_string* decrypt_fixed_xor(byte_string* in, byte* decryption_char) {
     if(score_candidate <= score_of_best_candidate) {
       // clear previously stored memory
       if(best_candidate != NULL) {
-        free_byte_string(&best_candidate);
+        free_byte_string(best_candidate);
       }
 
       // update the best candidate & decryption char
@@ -35,11 +35,11 @@ byte_string* decrypt_fixed_xor(byte_string* in, byte* decryption_char) {
       best_candidate = decrypted;
       score_of_best_candidate = score_candidate;
     } else {
-      free_byte_string(&decrypted);
+      free_byte_string(decrypted);
     }
 
     // free the repeated single byte
-    free_byte_string(&single_byte);
+    free_byte_string(single_byte);
   }
   assert(best_candidate != NULL);
 
@@ -145,11 +145,11 @@ byte_string* detect_single_character_xor(byte_string** byte_strings, size_t num_
 
       // move the buffer into the best candidate
       if(best_candidate != NULL) {
-        free_byte_string(&best_candidate);
+        free_byte_string(best_candidate);
       }
       best_candidate = decrypted;
     } else {
-      free_byte_string(&decrypted);
+      free_byte_string(decrypted);
     }
   }
 
@@ -199,8 +199,8 @@ byte_string* break_repeating_key_xor(byte_string* input) {
     xor_keys[key_size - 2].key_size = key_size;
     xor_keys[key_size - 2].normalized_edit_distance = normalized_edit_distance;
 
-    free_byte_string(&first_bytes);
-    free_byte_string(&second_bytes);
+    free_byte_string(first_bytes);
+    free_byte_string(second_bytes);
   }
 
   // sort the key sizes in ascending order
@@ -229,13 +229,13 @@ byte_string* break_repeating_key_xor(byte_string* input) {
       byte_string* decoded = decrypt_fixed_xor(transposed, &decrypted_char);
       key->buffer[k] = decrypted_char;
 
-      free_byte_string(&decoded);
-      free_byte_string(&transposed);
+      free_byte_string(decoded);
+      free_byte_string(transposed);
     }
 
     // decrypt the repeating key xor
     output_candidates[i] = encrypt_repeating_key_xor(input, key);
-    free_byte_string(&key);
+    free_byte_string(key);
   }
 
   float score_of_best_candidate = INFINITY;
@@ -249,13 +249,20 @@ byte_string* break_repeating_key_xor(byte_string* input) {
 
       // move the buffer into the best candidate
       if(best_candidate != NULL) {
-        free_byte_string(&best_candidate);
+        free_byte_string(best_candidate);
       }
       best_candidate = output_candidates[i];
     } else {
-      free_byte_string(&output_candidates[i]);
+      free_byte_string(output_candidates[i]);
     }
   }
 
   return best_candidate;
+}
+
+byte_string* decrypt_aes_128_ecb_file(byte_string* input) {
+  byte_string* key = from_ascii("YELLOW SUBMARINE");
+  byte_string* result = decrypt_aes_128_ecb(input, key);
+  free_byte_string(key);
+  return result;
 }

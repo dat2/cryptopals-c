@@ -15,8 +15,8 @@ char* read_file(char* file_name, long* file_size) {
   // open the file
   file = fopen(file_name, "r");
   if(file == NULL) {
-    exit(1);
-    return NULL;
+    fclose(file);
+    exit(-1);
   }
 
   // count the number of bytes in the file
@@ -27,15 +27,15 @@ char* read_file(char* file_name, long* file_size) {
   // allocate the file_buffer
   file_buffer = (char*) malloc(sizeof(char) * (*file_size));
   if(file_buffer == NULL) {
+  fclose(file);
     exit(-2);
-    return NULL;
   }
 
   // copy into the buffer
   bytes_read = fread(file_buffer, sizeof(char), *file_size, file);
   if(bytes_read != (*file_size))  {
+  fclose(file);
     exit(-3);
-    return NULL;
   }
 
   // close the file

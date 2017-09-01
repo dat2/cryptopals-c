@@ -35,4 +35,7 @@ typedef struct xor_key {
   float normalized_edit_distance;
 } xor_key;
 
+// challenge 7
+byte_string* decrypt_aes_128_ecb_file(byte_string* input);
+
 #endif

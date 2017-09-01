@@ -33,7 +33,9 @@ int hamming_distance(byte_string* a, byte_string* b);
 
 byte_string* fixed_xor(byte_string* a, byte_string* b);
 
+byte_string* decrypt_aes_128_ecb(byte_string* self, byte_string* key);
+
 // destruction
-void free_byte_string(byte_string** self);
+void free_byte_string(byte_string* self);
 
 #endif

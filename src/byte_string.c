@@ -4,6 +4,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <openssl/err.h>
+#include <openssl/evp.h>
+
 #include "byte_string.h"
 
 // construction
@@ -271,16 +274,49 @@ byte_string* fixed_xor(byte_string* a, byte_string* b) {
   return c;
 }
 
-// destruction
-void free_byte_string(byte_string** self) {
-  assert(self != NULL);
-  assert((*self) != NULL);
+static void handle_errors(void) {
+  ERR_print_errors_fp(stderr);
+  abort();
+}
 
-  if((*self)->buffer != NULL) {
-    free((*self)->buffer);
+byte_string* decrypt_aes_128_ecb(byte_string* self, byte_string* key) {
+  byte_string* result = new_byte_string(self->length);
+  int rc;
+  int len = 0;
+
+  // create the cipher
+  EVP_CIPHER_CTX* cipher_ctx = EVP_CIPHER_CTX_new();
+
+  // initialize the decryption cipher
+  rc = EVP_DecryptInit_ex(cipher_ctx, EVP_aes_128_ecb(), NULL, key->buffer, NULL);
+  if(rc != 1) {
+    handle_errors();
   }
-  free(*self);
-  *self = NULL;
 
-  assert(*self == NULL);
+  // decrypt some data
+  rc = EVP_DecryptUpdate(cipher_ctx, result->buffer, &len, self->buffer, self->length);
+  if(rc != 1) {
+    handle_errors();
+  }
+
+  // decrypt the last block(s), if needed
+  rc = EVP_DecryptFinal_ex(cipher_ctx, result->buffer + len, &len);
+  if(rc != 1) {
+    handle_errors();
+  }
+
+  // clear up the cipher
+  EVP_CIPHER_CTX_free(cipher_ctx);
+
+  return result;
+}
+
+// destruction
+void free_byte_string(byte_string* self) {
+  assert(self != NULL);
+
+  if(self->buffer != NULL) {
+    free(self->buffer);
+  }
+  free(self);
 }
