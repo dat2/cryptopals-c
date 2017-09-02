@@ -269,19 +269,31 @@ byte_string* decrypt_aes_128_ecb_file(byte_string* input) {
 
 byte_string* decrypt_aes_ecb(char* file_name) {
   size_t n_byte_strings;
-  byte_string** byte_strings = read_lines_hex(file_name, &n_byte_strings);
+  byte_string** lines_in_file = read_lines_hex(file_name, &n_byte_strings);
 
   // split each line into 16 byte blocks
   // find ones that are equal
-  for(size_t i = 0; i < n_byte_strings; i++) {
+  size_t index_of_aes_byte_string = 0;
+  for(size_t i = 0; i < n_byte_strings && index_of_aes_byte_string == 0; i++) {
     size_t n_splits;
-    byte_string** split_byte_strings = split_byte_string(byte_strings[i], 16, &n_splits);
+    byte_string** split_byte_strings = split_byte_string(lines_in_file[i], 16, &n_splits);
 
-    // TODO use a hash table :) uthash
+    // make a hash table, so we can find duplicates easy :)
+    byte_string* hash = NULL;
+    for(size_t j = 0; j < n_splits; j++) {
+      bool unique = add_byte_string(&hash, split_byte_strings[j]);
+      if(!unique) {
+        index_of_aes_byte_string = i;
+        break;
+      }
+    }
+    clear(&hash);
 
     free_byte_strings(split_byte_strings, n_splits);
   }
 
-  free_byte_strings(byte_strings, n_byte_strings);
+  // by here, we've found a line that has at least 2 blocks that are the same
+
+  free_byte_strings(lines_in_file, n_byte_strings);
   return NULL;
 }

@@ -354,3 +354,28 @@ void free_byte_strings(byte_string** array, size_t n_elements) {
     free_byte_string(array[i]);
   }
 }
+
+// hash stuff
+bool add_byte_string(byte_string** hash, byte_string* element) {
+  assert(hash != NULL);
+  assert(element != NULL);
+
+  if(find_byte_string(*hash,element) != NULL) {
+    return false;
+  } else {
+    HASH_ADD_KEYPTR(hh, *hash, element->buffer, element->length, element);
+    return true;
+  }
+}
+
+byte_string* find_byte_string(byte_string* hash, byte_string* element) {
+  assert(element != NULL);
+
+  byte_string* out = NULL;
+  HASH_FIND(hh, hash, element->buffer, element->length, out);
+  return out;
+}
+
+void clear(byte_string** hash) {
+  HASH_CLEAR(hh, *hash);
+}

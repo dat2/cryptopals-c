@@ -54,4 +54,11 @@ void free_byte_string(byte_string* self);
 
 void free_byte_strings(byte_string** array, size_t n_elements);
 
+// hash stuff
+bool add_byte_string(byte_string** hash, byte_string* element);
+
+byte_string* find_byte_string(byte_string* hash, byte_string* element);
+
+void clear(byte_string** hash);
+
 #endif
