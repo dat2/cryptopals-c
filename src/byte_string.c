@@ -1,5 +1,4 @@
 #include <assert.h>
-#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -15,13 +14,11 @@ byte_string* new_byte_string(size_t len) {
   byte* buffer = (byte*) calloc(len, sizeof(byte));
   if(buffer == NULL) {
     exit(-3);
-    return NULL;
   }
   // malloc result
   byte_string* result = malloc(sizeof(byte_string));
   if(result == NULL) {
     exit(-3);
-    return NULL;
   }
   result->length = len;
   result->buffer = buffer;
@@ -311,6 +308,37 @@ byte_string* decrypt_aes_128_ecb(byte_string* self, byte_string* key) {
   return result;
 }
 
+byte_string** split_byte_string(byte_string* self, size_t n_bytes, size_t* num_byte_strings) {
+  *num_byte_strings = self->length / n_bytes + (self->length % n_bytes > 0);
+
+  // allocate an array of byte strings
+  byte_string** array = calloc(*num_byte_strings, sizeof(byte_string*));
+  if(array == NULL) {
+    exit(-3);
+  }
+
+  // copy the bytes of `self` into each buffer
+  for(size_t i = 0; i < *num_byte_strings; i++) {
+    size_t chunk_size = min(n_bytes, (self->length - (n_bytes * i)));
+
+    array[i] = new_byte_string(chunk_size);
+    memcpy(array[i]->buffer, self->buffer + (n_bytes * i), chunk_size);
+  }
+
+  return array;
+}
+
+bool is_equal(byte_string* self, byte_string* other) {
+  size_t min_byte_string = min(self->length, other->length);
+
+  bool result = false;
+  for(size_t i = 0; i < min_byte_string; i++) {
+    result = result && (self->buffer[i] ^ other->buffer[i]);
+  }
+
+  return result;
+}
+
 // destruction
 void free_byte_string(byte_string* self) {
   assert(self != NULL);
@@ -319,4 +347,10 @@ void free_byte_string(byte_string* self) {
     free(self->buffer);
   }
   free(self);
+}
+
+void free_byte_strings(byte_string** array, size_t n_elements) {
+  for(size_t i = 0; i < n_elements; i++) {
+    free_byte_string(array[i]);
+  }
 }

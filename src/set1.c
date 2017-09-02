@@ -266,3 +266,20 @@ byte_string* decrypt_aes_128_ecb_file(byte_string* input) {
   free_byte_string(key);
   return result;
 }
+
+byte_string* decrypt_aes_ecb(char* file_name) {
+  size_t n_byte_strings;
+  byte_string** byte_strings = read_lines_hex(file_name, &n_byte_strings);
+
+  // split each line into 16 byte blocks
+  // find ones that are equal
+  for(size_t i = 0; i < n_byte_strings; i++) {
+    size_t n_splits;
+    byte_string** split_byte_strings = split_byte_string(byte_strings[i], 16, &n_splits);
+
+    free_byte_strings(split_byte_strings, n_splits);
+  }
+
+  free_byte_strings(byte_strings, n_byte_strings);
+  return NULL;
+}

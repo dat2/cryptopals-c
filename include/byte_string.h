@@ -1,6 +1,13 @@
 #ifndef BYTE_STRING_H
 #define BYTE_STRING_H
 
+#include <stdbool.h>
+
+#define min(a,b) \
+ ({ __typeof__ (a) _a = (a); \
+     __typeof__ (b) _b = (b); \
+   _a < _b ? _a : _b; })
+
 typedef unsigned char byte;
 
 typedef struct byte_string {
@@ -28,14 +35,20 @@ char* to_base64(byte_string* self);
 
 byte_string* substring(byte_string* self, size_t start, size_t end);
 
-// util operations
+// operations
 int hamming_distance(byte_string* a, byte_string* b);
 
 byte_string* fixed_xor(byte_string* a, byte_string* b);
 
 byte_string* decrypt_aes_128_ecb(byte_string* self, byte_string* key);
 
+byte_string** split_byte_string(byte_string* self, size_t n_bytes, size_t* num_byte_strings);
+
+bool is_equal(byte_string* self, byte_string* other);
+
 // destruction
 void free_byte_string(byte_string* self);
+
+void free_byte_strings(byte_string** array, size_t n_elements);
 
 #endif

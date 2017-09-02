@@ -1,3 +1,4 @@
+#include <getopt.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -23,8 +24,8 @@ static void challenge1() {
   actual = to_base64(byte_string);
 
   printf("challenge 1:\n");
-  // printf("expected: %s\n", expected);
-  // printf("actual  : %s\n", actual);
+  printf("expected: %s\n", expected);
+  printf("actual  : %s\n", actual);
   printf("expected == actual: %s\n", strcmp(expected, actual) == 0 ? "true" : "false");
 
   free_byte_string(byte_string);
@@ -41,8 +42,8 @@ static void challenge2() {
   actual = to_hex(c);
 
   printf("challenge 2:\n");
-  // printf("expected: %s\n", expected);
-  // printf("actual  : %s\n", actual);
+  printf("expected: %s\n", expected);
+  printf("actual  : %s\n", actual);
   printf("expected == actual: %s\n", strcmp(expected, actual) == 0 ? "true" : "false");
 
   free(actual);
@@ -62,9 +63,9 @@ static void challenge3() {
   actual = to_ascii(decoded);
 
   printf("challenge 3:\n");
-  // printf("expected: %s\n", expected);
-  // printf("actual  : %s\n", actual);
-  // printf("decryption char: %c\n", decryption_char);
+  printf("expected: %s\n", expected);
+  printf("actual  : %s\n", actual);
+  printf("decryption char: %c\n", decryption_char);
   printf("expected == actual: %s\n", strcmp(expected, actual) == 0 ? "true" : "false");
 
   free(actual);
@@ -84,8 +85,8 @@ static void challenge4() {
   actual = to_ascii(decoded);
 
   printf("challenge 4:\n");
-  // printf("expected: %s\n", expected);
-  // printf("actual  : %s\n", actual);
+  printf("expected: %s\n", expected);
+  printf("actual  : %s\n", actual);
   printf("expected == actual: %s\n", strcmp(expected, actual) == 0 ? "true" : "false");
 
   free(actual);
@@ -105,8 +106,8 @@ static void challenge5() {
   actual = to_hex(out);
 
   printf("challenge 5:\n");
-  // printf("expected: %s\n", expected);
-  // printf("actual  : %s\n", actual);
+  printf("expected: %s\n", expected);
+  printf("actual  : %s\n", actual);
   printf("expected == actual: %s\n", strcmp(expected, actual) == 0 ? "true" : "false");
 
   free_byte_string(input);
@@ -116,39 +117,45 @@ static void challenge5() {
 }
 
 static void challenge6() {
-  char* expected = "I'm back and I'm ringin' the bell \nA rockin' on the mike while the fly girls yell \nIn ecstasy in the back of me \nWell that's my DJ Deshay cuttin' all them Z's \nHittin' hard and the girlies goin' crazy \nVanilla's on the mike, man I'm not lazy. \n\nI'm lettin' my drug kick in \nIt controls my mouth and I begin \nTo just let it flow, let my concepts go \nMy posse's to the side yellin', Go Vanilla Go! \n\nSmooth 'cause that's the way I will be \nAnd if you don't give a damn, then \nWhy you starin' at me \nSo get off 'cause I control the stage \nThere's no dissin' allowed \nI'm in my own phase \nThe girlies sa y they love me and that is ok \nAnd I can dance better than any kid n' play \n\nStage 2 -- Yea the one ya' wanna listen to \nIt's off my head so let the beat play through \nSo I can funk it up and make it sound good \n1-2-3 Yo -- Knock on some wood \nFor good luck, I like my rhymes atrocious \nSupercalafragilisticexpialidocious \nI'm an effect and that you can bet \nI can take a fly girl and make her wet. \n\nI'm like Samson -- Samson to Delilah \nThere's no denyin', You can try to hang \nBut you'll keep tryin' to get my style \nOver and over, practice makes perfect \nBut not if you're a loafer. \n\nYou'll get nowhere, no place, no time, no girls \nSoon -- Oh my God, homebody, you probably eat \nSpaghetti with a spoon! Come on and say it! \n\nVIP. Vanilla Ice yep, yep, I'm comin' hard like a rhino \nIntoxicating so you stagger like a wino \nSo punks stop trying and girl stop cryin' \nVanilla Ice is sellin' and you people are buyin' \n'Cause why the freaks are jockin' like Crazy Glue \nMovin' and groovin' trying to sing along \nAll through the ghetto groovin' this here song \nNow you're amazed by the VIP posse. \n\nSteppin' so hard like a German Nazi \nStartled by the bases hittin' ground \nThere's no trippin' on mine, I'm just gettin' down \nSparkamatic, I'm hangin' tight like a fanatic \nYou trapped me once and I thought that \nYou might have it \nSo step down and lend me your ear \n'89 in my time! You, '90 is my year. \n\nYou're weakenin' fast, YO! and I can tell it \nYour body's gettin' hot, so, so I can smell it \nSo don't be mad and don't be sad \n'Cause the lyrics belong to ICE, You can call me Dad \nYou're pitchin' a fit, so step back and endure \nLet the witch doctor, Ice, do the dance to cure \nSo come up close and don't be square \nYou wanna battle me -- Anytime, anywhere \n\nYou thought that I was weak, Boy, you're dead wrong \nSo come on, everybody and sing this song \n\nSay -- Play that funky music Say, go white boy, go white boy go \nplay that funky music Go white boy, go white boy, go \nLay down and boogie and play that funky music till you die. \n\nPlay that funky music Come on, Come on, let me hear \nPlay that funky music white boy you say it, say it \nPlay that funky music A little louder now \nPlay that funky music, white boy Come on, Come on, Come on \nPlay that funky music \nn";
-  char* actual = NULL;
+  char* result = NULL;
 
   byte_string* input = read_file_base64("data/6.txt");
   byte_string* out = break_repeating_key_xor(input);
-  actual = to_ascii(out);
+  result = to_ascii(out);
 
   printf("challenge 6:\n");
-  // printf("expected: %s\n", expected);
-  // printf("actual  : %s\n", actual);
-  printf("expected == actual: %s\n", strcmp(expected, actual) == 0 ? "true" : "false");
+  printf("result  : %s\n", result);
 
-  free(actual);
+  free(result);
   free_byte_string(input);
   free_byte_string(out);
 }
 
 static void challenge7() {
-  char* expected = "I'm back and I'm ringin' the bell \nA rockin' on the mike while the fly girls yell\nIn ecstasy in the back of me\nWell that's my DJ Deshay cuttin' all them Z's\nHittin' hard and the girlies goin' crazy\nVanilla's on the mike, man I'm not lazy.\n\nI'm lettin' my drug kick in\nIt controls my mouth and I begin\nTo just let it flow, let my concepts go\nMy posse's to the side yellin', Go Vanilla Go!\n\nSmooth 'cause that's the way I will be\nAnd if you don't give a damn, then\nWhy you starin' at me\nSo get off 'cause I control the stage\nThere's no dissin' allowed\nI'm in my own phase\nThe girlies sa y they love me and that is ok\nAnd I can dance better than any kid n' play\n\nStage 2 -- Yea the one ya' wanna listen to\nIt's off my head so let the beat play through\nSo I can funk it up and make it sound good\n1-2-3 Yo -- Knock on some wood\nFor good luck, I like my rhymes atrocious\nSupercalafragilisticexpialidocious\nI'm an effect and that you can bet\nI can take a fly girl and make her wet.\nI'm like Samson -- Samson to Delilah\nThere's no denyin', You can try to hang\nBut you'll keep tryin' to get my style\nOver and over, practice makes perfect\nBut not if you're a loafer.\nYou'll get nowhere, no place, no time, no girls\nSoon -- Oh my God, homebody, you probably eat\nSpaghetti with a spoon! Come on and say it!\nVIP. Vanilla Ice yep, yep, I'm comin' hard like a rhino\nIntoxicating so you stagger like a wino\nSo punks stop trying and girl stop cryin'\nVanilla Ice is sellin' and you people are buyin'\n'Cause why the freaks are jockin' like Crazy Glue\nMovin' and groovin' trying to sing along\nAll through the ghetto groovin' this here song\nNow you're amazed by the VIP posse.\nSteppin' so hard like a German Nazi\nStartled by the bases hittin' ground\nThere's no trippin' on mine, I'm just gettin' down\nSparkamatic, I'm hangin' tight like a fanatic\nYou trapped me once and I thought that\nYou might have it\nSo step down and lend me your ear\n'89 in my time! You, '90 is my year.\nYou're weakenin' fast, YO! and I can tell it\nYour body's gettin' hot, so, so I can smell it\nSo don't be mad and don't be sad\n'Cause the lyrics belong to ICE, You can call me Dad\nYou're pitchin' a fit, so step back and endure\nLet the witch doctor, Ice, do the dance to cure\nSo come up close and don't be square\nYou wanna battle me -- Anytime, anywhere\n\nYou thought that I was weak, Boy, you're dead wrong\nSo come on, everybody and sing this song\n\nSay -- Play that funky music Say, go white boy, go white boy go\nplay that funky music Go white boy, go white boy, go\nLay down and boogie and play that funky music till you die.\n\nPlay that funky music Come on, Come on, let me hear\nPlay that funky music white boy you say it, say it\nPlay that funky music A little louder now\nPlay that funky music, white boy Come on, Come on, Come on\nPlay that funky music\n\\x04\\x04\\x04\\x04";
-  char* actual = NULL;
+  char* result = NULL;
 
   byte_string* input = read_file_base64("data/7.txt");
   byte_string* out = decrypt_aes_128_ecb_file(input);
-  actual = to_ascii(out);
+  result = to_ascii(out);
 
   printf("challenge 7:\n");
-  printf("expected: %s\n", expected);
-  printf("actual  : %s\n", actual);
-  printf("expected == actual: %s\n", strcmp(expected, actual) == 0 ? "true" : "false");
+  printf("result  : %s\n", result);
 
-  free(actual);
+  free(result);
   free_byte_string(input);
   free_byte_string(out);
+}
+
+static void challenge8() {
+  char* expected = "";
+  char* result = NULL;
+
+  byte_string* decrypted = decrypt_aes_ecb("data/8.txt");
+
+  printf("challenge 8:\n");
+  printf("result  : %s\n", result);
+
+  free(result);
 }
 
 static void cleanup_openssl() {
@@ -160,19 +167,21 @@ int main(int argc, char** argv) {
 
   init_openssl();
 
-  challenge1();
-  printf("\n");
-  challenge2();
-  printf("\n");
-  challenge3();
-  printf("\n");
-  challenge4();
-  printf("\n");
-  challenge5();
-  printf("\n");
-  challenge6();
-  printf("\n");
-  challenge7();
+  // challenge1();
+  // printf("\n");
+  // challenge2();
+  // printf("\n");
+  // challenge3();
+  // printf("\n");
+  // challenge4();
+  // printf("\n");
+  // challenge5();
+  // printf("\n");
+  // challenge6();
+  // printf("\n");
+  // challenge7();
+  // printf("\n");
+  challenge8();
 
   cleanup_openssl();
 
