@@ -328,13 +328,20 @@ byte_string** split_byte_string(byte_string* self, size_t n_bytes, size_t* num_b
   return array;
 }
 
-bool is_equal(byte_string* self, byte_string* other) {
-  size_t min_byte_string = min(self->length, other->length);
+byte_string* pad_pkcs7(byte_string* self, size_t block_size) {
+  assert(self != NULL);
+  assert(self->length >= 0);
+  assert(block_size >= 0);
 
-  bool result = false;
-  for(size_t i = 0; i < min_byte_string; i++) {
-    result = result && (self->buffer[i] ^ other->buffer[i]);
-  }
+  // allocate the result
+  size_t n_blocks = self->length / block_size + (self->length % block_size > 0);
+  byte_string* result = new_byte_string(n_blocks * block_size);
+  memcpy(result->buffer, self->buffer, self->length);
+
+  // calculate the padding, apply it to the result
+  size_t n_padding = result->length - self->length;
+  assert(n_padding >= 0 && n_padding < 256);
+  memset(result->buffer + self->length, n_padding, n_padding);
 
   return result;
 }

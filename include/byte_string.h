@@ -47,7 +47,7 @@ byte_string* decrypt_aes_128_ecb(byte_string* self, byte_string* key);
 
 byte_string** split_byte_string(byte_string* self, size_t n_bytes, size_t* num_byte_strings);
 
-bool is_equal(byte_string* self, byte_string* other);
+byte_string* pad_pkcs7(byte_string* self, size_t block_size);
 
 // destruction
 void free_byte_string(byte_string* self);

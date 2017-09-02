@@ -160,6 +160,24 @@ static void challenge8() {
   free(hex);
 }
 
+static void challenge9() {
+  char* expected = "YELLOW SUBMARINE\\x04\\x04\\x04\\x04";
+  char* actual = NULL;
+
+  byte_string* input = from_ascii("YELLOW SUBMARINE");
+  byte_string* padded = pad_pkcs7(input, 20);
+  actual = to_ascii(padded);
+
+  printf("challenge 9:\n");
+  printf("expected: %s\n", expected);
+  printf("actual  : %s\n", actual);
+  printf("expected == actual: %s\n", strcmp(expected, actual) == 0 ? "true" : "false");
+
+  free(actual);
+  free_byte_string(input);
+  free_byte_string(padded);
+}
+
 static void cleanup_openssl() {
   EVP_cleanup();
   ERR_free_strings();
@@ -183,7 +201,9 @@ int main(int argc, char** argv) {
   // printf("\n");
   // challenge7();
   // printf("\n");
-  challenge8();
+  // challenge8();
+  // printf("\n");
+  challenge9();
   printf("\n");
 
   cleanup_openssl();
