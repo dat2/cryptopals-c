@@ -267,7 +267,7 @@ byte_string* decrypt_aes_128_ecb_file(byte_string* input) {
   return result;
 }
 
-byte_string* decrypt_aes_ecb(char* file_name) {
+size_t detect_aes_ecb(char* file_name) {
   size_t n_byte_strings;
   byte_string** lines_in_file = read_lines_hex(file_name, &n_byte_strings);
 
@@ -293,7 +293,6 @@ byte_string* decrypt_aes_ecb(char* file_name) {
   }
 
   // by here, we've found a line that has at least 2 blocks that are the same
-
   free_byte_strings(lines_in_file, n_byte_strings);
-  return NULL;
+  return (index_of_aes_byte_string + 1);
 }

@@ -147,15 +147,13 @@ static void challenge7() {
 }
 
 static void challenge8() {
-  char* expected = "";
-  char* result = NULL;
-
-  byte_string* decrypted = decrypt_aes_ecb("data/8.txt");
+  size_t expected = 132;
+  size_t actual = detect_aes_ecb("data/8.txt");
 
   printf("challenge 8:\n");
-  printf("result  : %s\n", result);
-
-  free(result);
+  printf("expected: %zu\n", expected);
+  printf("actual  : %zu\n", actual);
+  printf("expected == actual: %s\n", (expected == actual) ? "true" : "false");
 }
 
 static void cleanup_openssl() {
@@ -182,6 +180,7 @@ int main(int argc, char** argv) {
   // challenge7();
   // printf("\n");
   challenge8();
+  printf("\n");
 
   cleanup_openssl();
 
