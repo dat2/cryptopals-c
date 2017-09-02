@@ -3,6 +3,8 @@
 
 #include <stdbool.h>
 
+#include <uthash.h>
+
 #define min(a,b) \
  ({ __typeof__ (a) _a = (a); \
      __typeof__ (b) _b = (b); \
@@ -13,6 +15,7 @@ typedef unsigned char byte;
 typedef struct byte_string {
   size_t length;
   byte* buffer;
+  UT_hash_handle hh;
 } byte_string;
 
 // construction

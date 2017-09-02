@@ -277,6 +277,8 @@ byte_string* decrypt_aes_ecb(char* file_name) {
     size_t n_splits;
     byte_string** split_byte_strings = split_byte_string(byte_strings[i], 16, &n_splits);
 
+    // TODO use a hash table :) uthash
+
     free_byte_strings(split_byte_strings, n_splits);
   }
 

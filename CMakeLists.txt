@@ -9,6 +9,7 @@ file(GLOB SOURCES src/*.c)
 
 # header files in include
 include_directories(include)
+include_directories(lib/uthash/include)
 
 # main binary
 add_executable(cryptopals ${SOURCES})
