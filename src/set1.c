@@ -267,7 +267,7 @@ byte_string* decrypt_aes_128_ecb_file(byte_string* input) {
   return result;
 }
 
-size_t detect_aes_ecb(char* file_name) {
+size_t detect_aes_ecb(char* file_name, char** hex_of_block) {
   size_t n_byte_strings;
   byte_string** lines_in_file = read_lines_hex(file_name, &n_byte_strings);
 
@@ -284,6 +284,7 @@ size_t detect_aes_ecb(char* file_name) {
       bool unique = add_byte_string(&hash, split_byte_strings[j]);
       if(!unique) {
         index_of_aes_byte_string = i;
+        *hex_of_block = to_hex(split_byte_strings[j]);
         break;
       }
     }

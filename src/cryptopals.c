@@ -147,13 +147,17 @@ static void challenge7() {
 }
 
 static void challenge8() {
-  size_t expected = 132;
-  size_t actual = detect_aes_ecb("data/8.txt");
+  size_t expected = 133;
+  char* hex;
+  size_t actual = detect_aes_ecb("data/8.txt", &hex);
 
   printf("challenge 8:\n");
   printf("expected: %zu\n", expected);
   printf("actual  : %zu\n", actual);
+  printf("detected: %s\n", hex);
   printf("expected == actual: %s\n", (expected == actual) ? "true" : "false");
+
+  free(hex);
 }
 
 static void cleanup_openssl() {

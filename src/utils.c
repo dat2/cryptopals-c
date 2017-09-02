@@ -54,7 +54,6 @@ char** split_lines(char* buffer, size_t* n_lines) {
   lines = (char**) malloc(sizeof(char*));
   if(lines == NULL) {
     exit(-3);
-    return NULL;
   }
 
   line = strtok(buffer, delim);
@@ -65,12 +64,11 @@ char** split_lines(char* buffer, size_t* n_lines) {
     lines = (char**) realloc(lines, sizeof(char*) * num_lines);
     if(lines == NULL) {
       exit(-3);
-      return NULL;
     }
 
     // allocate memory for the line (and zero it out)
     line_length = strlen(line);
-    *(lines + (num_lines - 1)) = calloc(line_length, sizeof(char));
+    *(lines + (num_lines - 1)) = calloc(line_length + 1, sizeof(char));
 
     // copy line into a newly created string
     strncpy(*(lines + (num_lines - 1)), line, line_length);
@@ -97,7 +95,6 @@ byte_string** read_lines_hex(char* file_name, size_t* n_lines) {
   byte_string** result = (byte_string**) calloc(*n_lines, sizeof(byte_string*));
   if(result == NULL) {
     exit(-3);
-    return NULL;
   }
 
   // generate byte strings from the character strings :)

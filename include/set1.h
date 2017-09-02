@@ -39,6 +39,6 @@ typedef struct xor_key {
 byte_string* decrypt_aes_128_ecb_file(byte_string* input);
 
 // challenge 8
-size_t detect_aes_ecb(char* file_name);
+size_t detect_aes_ecb(char* file_name, char** hex_of_block);
 
 #endif
