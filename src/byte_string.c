@@ -4,7 +4,7 @@
 #include <string.h>
 
 #include <openssl/err.h>
-#include <openssl/evp.h>
+#include <openssl/aes.h>
 
 #include "byte_string.h"
 
@@ -116,7 +116,7 @@ byte_string* repeat_byte(size_t len, byte b) {
 char* to_hex(byte_string* self) {
   assert(self != NULL);
 
-  char* out = (char*) calloc(self->length * 2, sizeof(char));
+  char* out = (char*) calloc(self->length * 2 + 1, sizeof(char));
   if(out == NULL) {
     exit(-3);
     return NULL;
@@ -141,7 +141,7 @@ static char num_to_hex(byte b) {
 char* to_ascii(byte_string* self) {
   assert(self != NULL);
 
-  char* out = (char*) calloc(self->length * 5, sizeof(char));
+  char* out = (char*) calloc(self->length * 5 + 1, sizeof(char));
   if(out == NULL) {
     exit(-3);
     return NULL;
@@ -196,7 +196,7 @@ char* to_base64(byte_string* self) {
   assert(self != NULL);
   assert(self->length >= 0);
 
-  char* out = calloc(self->length * 4 / 3, sizeof(char));
+  char* out = calloc(self->length * 4 / 3 + 1, sizeof(char));
   if(out == NULL) {
     exit(-3);
     return NULL;
@@ -271,44 +271,38 @@ byte_string* fixed_xor(byte_string* a, byte_string* b) {
   return c;
 }
 
-static void handle_errors(void) {
-  ERR_print_errors_fp(stderr);
-  abort();
+byte_string* encrypt_aes_128_ecb(byte_string* self, byte_string* key) {
+  assert(self != NULL);
+  assert(key != NULL);
+  assert(self->length == 16);
+  assert(key->length == 16);
+
+  byte_string* result = new_byte_string(self->length);
+  AES_KEY aeskey;
+  AES_set_encrypt_key(key->buffer, 128, &aeskey);
+  AES_encrypt(self->buffer, result->buffer, &aeskey);
+  return result;
 }
 
 byte_string* decrypt_aes_128_ecb(byte_string* self, byte_string* key) {
+  assert(self != NULL);
+  assert(key != NULL);
+  assert(self->length == 16);
+  assert(key->length == 16);
+
   byte_string* result = new_byte_string(self->length);
-  int rc;
-  int len = 0;
-
-  // create the cipher
-  EVP_CIPHER_CTX* cipher_ctx = EVP_CIPHER_CTX_new();
-
-  // initialize the decryption cipher
-  rc = EVP_DecryptInit_ex(cipher_ctx, EVP_aes_128_ecb(), NULL, key->buffer, NULL);
-  if(rc != 1) {
-    handle_errors();
-  }
-
-  // decrypt some data
-  rc = EVP_DecryptUpdate(cipher_ctx, result->buffer, &len, self->buffer, self->length);
-  if(rc != 1) {
-    handle_errors();
-  }
-
-  // decrypt the last block(s), if needed
-  rc = EVP_DecryptFinal_ex(cipher_ctx, result->buffer + len, &len);
-  if(rc != 1) {
-    handle_errors();
-  }
-
-  // clear up the cipher
-  EVP_CIPHER_CTX_free(cipher_ctx);
-
+  AES_KEY aeskey;
+  AES_set_decrypt_key(key->buffer, 128, &aeskey);
+  AES_decrypt(self->buffer, result->buffer, &aeskey);
   return result;
 }
 
 byte_string** split_byte_string(byte_string* self, size_t n_bytes, size_t* num_byte_strings) {
+  assert(self != NULL);
+  assert(num_byte_strings != NULL);
+  assert(self->length >= 0);
+  assert(n_bytes >= 0 && n_bytes <= self->length);
+
   *num_byte_strings = self->length / n_bytes + (self->length % n_bytes > 0);
 
   // allocate an array of byte strings
@@ -326,6 +320,26 @@ byte_string** split_byte_string(byte_string* self, size_t n_bytes, size_t* num_b
   }
 
   return array;
+}
+
+byte_string* concat_byte_strings(byte_string** array, size_t n_elements) {
+  assert(array != NULL);
+  assert(n_elements >= 0);
+
+  size_t concat_length = 0;
+  for(size_t i = 0; i < n_elements; i++) {
+    concat_length += array[i]->length;
+  }
+
+  byte_string* result = new_byte_string(concat_length);
+
+  size_t start_copy_index;
+  for(size_t i = 0; i < n_elements; i++) {
+    memcpy(result->buffer + start_copy_index, array[i]->buffer, array[i]->length);
+    start_copy_index += array[i]->length;
+  }
+
+  return result;
 }
 
 byte_string* pad_pkcs7(byte_string* self, size_t block_size) {

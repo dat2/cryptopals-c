@@ -4,11 +4,13 @@
 #include <string.h>
 
 #include <openssl/conf.h>
+#include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
 
 #include "byte_string.h"
 #include "set1.h"
+#include "set2.h"
 
 static void init_openssl() {
   ERR_load_crypto_strings();
@@ -178,6 +180,26 @@ static void challenge9() {
   free_byte_string(padded);
 }
 
+static void challenge10() {
+  char* result = NULL;
+
+  byte_string* input = read_file_base64("data/10.txt");
+  byte_string* key = from_ascii("YELLOW SUBMARINE");
+  byte_string* iv = repeat_byte(16, 0);
+
+  byte_string* decrypted = decrypt_aes_128_cbc_by_hand(input, key, iv);
+  result = to_ascii(decrypted);
+
+  printf("challenge 10:\n");
+  printf("result: %s\n", result);
+
+  free(result);
+  free_byte_string(input);
+  free_byte_string(key);
+  free_byte_string(iv);
+  free_byte_string(decrypted);
+}
+
 static void cleanup_openssl() {
   EVP_cleanup();
   ERR_free_strings();
@@ -203,7 +225,9 @@ int main(int argc, char** argv) {
   // printf("\n");
   // challenge8();
   // printf("\n");
-  challenge9();
+  // challenge9();
+  // printf("\n");
+  challenge10();
   printf("\n");
 
   cleanup_openssl();
