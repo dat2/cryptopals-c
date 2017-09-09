@@ -204,16 +204,17 @@ static void challenge11() {
   char* result = NULL;
 
   byte_string* data = from_ascii("Hello World, how is it going?");
-  byte_string* encrypted = encryption_oracle(data);
+  oracle_result oracle = encryption_oracle(data);
 
-  result = to_ascii(encrypted);
+  result = to_ascii(oracle.ciphertext);
 
   printf("challenge 11:\n");
+  printf("oracle chose: %s\n", oracle.encryption_type);
   printf("result: %s\n", result);
 
   free(result);
   free_byte_string(data);
-  free_byte_string(encrypted);
+  free_byte_string(oracle.ciphertext);
 }
 
 static void cleanup_openssl() {

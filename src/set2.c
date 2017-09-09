@@ -38,7 +38,7 @@ byte_string* decrypt_aes_128_cbc_by_hand(byte_string* self, byte_string* key, by
   return plaintext;
 }
 
-byte_string* encryption_oracle(byte_string* self) {
+oracle_result encryption_oracle(byte_string* self) {
 
   // prepare the plaintext
   byte_string* prepend = random_bytes(random_range(5, 10));
@@ -55,12 +55,15 @@ byte_string* encryption_oracle(byte_string* self) {
   byte_string* key = random_bytes(16);
 
   // decide ECB and CBC
-  byte_string* ciphertext = NULL;
+  oracle_result result;
+  result.ciphertext = NULL;
   if(random_range(0, 2) == 0) {
-    ciphertext = encrypt_aes_128_ecb(plaintext, key);
+    result.encryption_type = "ECB";
+    result.ciphertext = encrypt_aes_128_ecb(plaintext, key);
   } else {
+    result.encryption_type = "CBC";
     byte_string* random_iv = random_bytes(16);
-    ciphertext = encrypt_aes_128_cbc(plaintext, key, random_iv);
+    result.ciphertext = encrypt_aes_128_cbc(plaintext, key, random_iv);
     free_byte_string(random_iv);
   }
 
@@ -70,5 +73,5 @@ byte_string* encryption_oracle(byte_string* self) {
   free_byte_string(plaintext);
   free_byte_string(key);
 
-  return ciphertext;
+  return result;
 }
