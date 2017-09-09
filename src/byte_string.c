@@ -286,6 +286,59 @@ int hamming_distance(byte_string* a, byte_string* b) {
   return result;
 }
 
+byte_string** split_byte_string(byte_string* self, size_t n_bytes, size_t* num_byte_strings) {
+  assert(self != NULL);
+  assert(num_byte_strings != NULL);
+  assert(self->length >= 0);
+  assert(n_bytes >= 0 && n_bytes <= self->length);
+
+  *num_byte_strings = self->length / n_bytes + (self->length % n_bytes > 0);
+
+  // allocate an array of byte strings
+  byte_string** array = calloc(*num_byte_strings, sizeof(byte_string*));
+  if(array == NULL) {
+    exit(-3);
+  }
+
+  // copy the bytes of `self` into each buffer
+  for(size_t i = 0; i < *num_byte_strings; i++) {
+    size_t chunk_size = min(n_bytes, (self->length - (n_bytes * i)));
+
+    array[i] = new_byte_string(chunk_size);
+    memcpy(array[i]->buffer, self->buffer + (n_bytes * i), chunk_size);
+  }
+
+  return array;
+}
+
+byte_string* concat_byte_strings(byte_string** array, size_t n_elements) {
+  assert(array != NULL);
+  assert(n_elements >= 0);
+
+  size_t concat_length = 0;
+  for(size_t i = 0; i < n_elements; i++) {
+    concat_length += array[i]->length;
+  }
+
+  byte_string* result = new_byte_string(concat_length);
+
+  size_t start_copy_index = 0;
+  for(size_t i = 0; i < n_elements; i++) {
+    memcpy(result->buffer + start_copy_index, array[i]->buffer, array[i]->length);
+    start_copy_index += array[i]->length;
+  }
+
+  return result;
+}
+
+byte_string* append_byte_string(byte_string* a, byte_string* b) {
+  byte_string* array[2];
+  array[0] = a;
+  array[1] = b;
+  return concat_byte_strings(array, 2);
+}
+
+// encryption operations
 byte_string* fixed_xor(byte_string* a, byte_string* b) {
   assert(a != NULL);
   assert(b != NULL);
@@ -496,51 +549,6 @@ byte_string* decrypt_aes_128_cbc(byte_string* self, byte_string* key, byte_strin
 
   // cleanup
   EVP_CIPHER_CTX_free(ctx);
-
-  return result;
-}
-
-byte_string** split_byte_string(byte_string* self, size_t n_bytes, size_t* num_byte_strings) {
-  assert(self != NULL);
-  assert(num_byte_strings != NULL);
-  assert(self->length >= 0);
-  assert(n_bytes >= 0 && n_bytes <= self->length);
-
-  *num_byte_strings = self->length / n_bytes + (self->length % n_bytes > 0);
-
-  // allocate an array of byte strings
-  byte_string** array = calloc(*num_byte_strings, sizeof(byte_string*));
-  if(array == NULL) {
-    exit(-3);
-  }
-
-  // copy the bytes of `self` into each buffer
-  for(size_t i = 0; i < *num_byte_strings; i++) {
-    size_t chunk_size = min(n_bytes, (self->length - (n_bytes * i)));
-
-    array[i] = new_byte_string(chunk_size);
-    memcpy(array[i]->buffer, self->buffer + (n_bytes * i), chunk_size);
-  }
-
-  return array;
-}
-
-byte_string* concat_byte_strings(byte_string** array, size_t n_elements) {
-  assert(array != NULL);
-  assert(n_elements >= 0);
-
-  size_t concat_length = 0;
-  for(size_t i = 0; i < n_elements; i++) {
-    concat_length += array[i]->length;
-  }
-
-  byte_string* result = new_byte_string(concat_length);
-
-  size_t start_copy_index = 0;
-  for(size_t i = 0; i < n_elements; i++) {
-    memcpy(result->buffer + start_copy_index, array[i]->buffer, array[i]->length);
-    start_copy_index += array[i]->length;
-  }
 
   return result;
 }

@@ -214,6 +214,21 @@ static void challenge11() {
   free_byte_string(ciphertext);
 }
 
+static void challenge12() {
+  char* result = NULL;
+
+  byte_string* data = from_ascii("HELLO WORLD     HELLO WORLD     HELLO WORLD     HELLO WORLD     HELLO WORLD     HELLO WORLD     ");
+  byte_string* encrypted = encryption_oracle_ecb(data);
+
+  result = "";
+
+  printf("challenge 12:\n");
+  printf("result: %s\n", result);
+
+  free_byte_string(data);
+  free_byte_string(encrypted);
+}
+
 static void cleanup_openssl() {
   EVP_cleanup();
   ERR_free_strings();
@@ -245,7 +260,9 @@ int main(int argc, char** argv) {
   // printf("\n");
   // challenge10();
   // printf("\n");
-  challenge11();
+  // challenge11();
+  // printf("\n");
+  challenge12();
   printf("\n");
 
   cleanup_openssl();

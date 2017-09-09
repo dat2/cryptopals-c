@@ -9,4 +9,6 @@ byte_string* encryption_oracle(byte_string* self, const char** out);
 
 const char* detect_oracle_type(byte_string* self);
 
+byte_string* encryption_oracle_ecb(byte_string* self);
+
 #endif

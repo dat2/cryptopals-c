@@ -80,3 +80,27 @@ byte_string* encryption_oracle(byte_string* self, const char** out) {
 const char* detect_oracle_type(byte_string* self) {
   return is_aes_ecb(self) ? "ECB" : "CBC";
 }
+
+byte_string* encryption_oracle_ecb(byte_string* self) {
+
+  // static variables
+  static bool initialized = false;
+  static byte_string* KEY = NULL;
+  static byte_string* APPEND = NULL;
+  if(!initialized) {
+    KEY = random_bytes(16);
+    APPEND = from_base64(
+      "Um9sbGluJyBpbiBteSA1LjAKV2l0aCBteSByYWctdG9wIGRvd24gc28gbXkg"
+      "aGFpciBjYW4gYmxvdwpUaGUgZ2lybGllcyBvbiBzdGFuZGJ5IHdhdmluZyBq"
+      "dXN0IHRvIHNheSBoaQpEaWQgeW91IHN0b3A/IE5vLCBJIGp1c3QgZHJvdmUg"
+      "YnkK"
+    );
+    initialized = true;
+  }
+
+  byte_string* plaintext = append_byte_string(self, APPEND);
+  byte_string* ciphertext = encrypt_aes_128_ecb(plaintext, KEY);
+  free_byte_string(plaintext);
+
+  return ciphertext;
+}
