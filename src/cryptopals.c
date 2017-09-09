@@ -202,10 +202,8 @@ static void challenge11() {
 
   // needs to be long enough to detect a couple blocks
   byte_string* data = from_ascii("HELLO WORLD     HELLO WORLD     HELLO WORLD     HELLO WORLD     HELLO WORLD     HELLO WORLD     ");
-
-  oracle_result oracle = encryption_oracle(data);
-  expected = oracle.encryption_type;
-  actual = detect_oracle_type(oracle.ciphertext);
+  byte_string* ciphertext = encryption_oracle(data, &expected);
+  actual = detect_oracle_type(ciphertext);
 
   printf("challenge 11:\n");
   printf("expected: %s\n", expected);
@@ -213,7 +211,7 @@ static void challenge11() {
   printf("expected == actual: %s\n", strcmp(expected, actual) == 0 ? "true" : "false");
 
   free_byte_string(data);
-  free_byte_string(oracle.ciphertext);
+  free_byte_string(ciphertext);
 }
 
 static void cleanup_openssl() {

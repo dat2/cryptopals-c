@@ -5,6 +5,7 @@
 #include <string.h>
 
 #include "byte_string.h"
+#include "errors.h"
 #include "utils.h"
 
 char* read_file(char* file_name, long* file_size) {

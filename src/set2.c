@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "errors.h"
 #include "set1.h"
 #include "set2.h"
 #include "utils.h"
@@ -39,7 +40,7 @@ byte_string* decrypt_aes_128_cbc_by_hand(byte_string* self, byte_string* key, by
   return plaintext;
 }
 
-oracle_result encryption_oracle(byte_string* self) {
+byte_string* encryption_oracle(byte_string* self, const char** out) {
 
   // prepare the plaintext
   byte_string* prepend = random_bytes(random_range(5, 10));
@@ -56,15 +57,14 @@ oracle_result encryption_oracle(byte_string* self) {
   byte_string* key = random_bytes(16);
 
   // decide ECB and CBC
-  oracle_result result;
-  result.ciphertext = NULL;
+  byte_string* ciphertext = NULL;
   if(random_range(0, 2) == 0) {
-    result.encryption_type = "ECB";
-    result.ciphertext = encrypt_aes_128_ecb(plaintext, key);
+    *out = "ECB";
+    ciphertext = encrypt_aes_128_ecb(plaintext, key);
   } else {
-    result.encryption_type = "CBC";
+    *out = "CBC";
     byte_string* random_iv = random_bytes(16);
-    result.ciphertext = encrypt_aes_128_cbc(plaintext, key, random_iv);
+    ciphertext = encrypt_aes_128_cbc(plaintext, key, random_iv);
     free_byte_string(random_iv);
   }
 
@@ -74,7 +74,7 @@ oracle_result encryption_oracle(byte_string* self) {
   free_byte_string(plaintext);
   free_byte_string(key);
 
-  return result;
+  return ciphertext;
 }
 
 const char* detect_oracle_type(byte_string* self) {

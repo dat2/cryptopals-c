@@ -8,9 +8,11 @@
 #include <openssl/aes.h>
 
 #include "byte_string.h"
+#include "errors.h"
 
 // construction
 byte_string* new_byte_string(size_t len) {
+
   // malloc buffer
   byte* buffer = (byte*) calloc(len, sizeof(byte));
   if(buffer == NULL) {
@@ -324,7 +326,7 @@ byte_string* decrypt_aes_128_ecb_simple(byte_string* self, byte_string* key) {
 }
 
 static size_t pad_to_block_size(size_t length, size_t block_size) {
-  return length + (length % block_size ? (block_size - length % block_size) : 0);
+  return length + (block_size - length % block_size);
 }
 
 static void handle_openssl_errors(void) {
