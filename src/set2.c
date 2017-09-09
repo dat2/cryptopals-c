@@ -24,7 +24,7 @@ byte_string* decrypt_aes_128_cbc_by_hand(byte_string* self, byte_string* key, by
 
   byte_string* xor_block = iv;
   for(size_t i = 0; i < num_blocks; i++) {
-    byte_string* xored_plaintext = decrypt_aes_128_ecb(ciphertexts[i], key);
+    byte_string* xored_plaintext = decrypt_aes_128_ecb_simple(ciphertexts[i], key);
     plaintexts[i] = fixed_xor(xored_plaintext, xor_block);
     free_byte_string(xored_plaintext);
     xor_block = ciphertexts[i];

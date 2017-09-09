@@ -207,8 +207,8 @@ static void challenge11() {
   byte_string* key = from_ascii("YELLOW SUBMARINE");
   byte_string* random_iv = random_bytes(16);
 
-  byte_string* encrypted_data = encrypt_aes_128_cbc(data, key, random_iv);
-  byte_string* decrypted_data = decrypt_aes_128_cbc(encrypted_data, key, random_iv);
+  byte_string* encrypted_data = encrypt_aes_128_ecb(data, key);
+  byte_string* decrypted_data = decrypt_aes_128_ecb(encrypted_data, key);
 
   result = to_ascii(decrypted_data);
 

@@ -45,6 +45,10 @@ int hamming_distance(byte_string* a, byte_string* b);
 
 byte_string* fixed_xor(byte_string* a, byte_string* b);
 
+byte_string* encrypt_aes_128_ecb_simple(byte_string* self, byte_string* key);
+
+byte_string* decrypt_aes_128_ecb_simple(byte_string* self, byte_string* key);
+
 byte_string* encrypt_aes_128_ecb(byte_string* self, byte_string* key);
 
 byte_string* decrypt_aes_128_ecb(byte_string* self, byte_string* key);
