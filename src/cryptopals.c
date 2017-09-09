@@ -150,16 +150,12 @@ static void challenge7() {
 
 static void challenge8() {
   size_t expected = 133;
-  char* hex;
-  size_t actual = detect_aes_ecb("data/8.txt", &hex);
+  size_t actual = detect_aes_ecb("data/8.txt");
 
   printf("challenge 8:\n");
   printf("expected: %zu\n", expected);
   printf("actual  : %zu\n", actual);
-  printf("detected: %s\n", hex);
   printf("expected == actual: %s\n", (expected == actual) ? "true" : "false");
-
-  free(hex);
 }
 
 static void challenge9() {
@@ -201,18 +197,21 @@ static void challenge10() {
 }
 
 static void challenge11() {
-  char* result = NULL;
+  const char* expected = NULL;
+  const char* actual = NULL;
 
-  byte_string* data = from_ascii("Hello World, how is it going?");
+  // needs to be long enough to detect a couple blocks
+  byte_string* data = from_ascii("HELLO WORLD     HELLO WORLD     HELLO WORLD     HELLO WORLD     HELLO WORLD     HELLO WORLD     ");
+
   oracle_result oracle = encryption_oracle(data);
-
-  result = to_ascii(oracle.ciphertext);
+  expected = oracle.encryption_type;
+  actual = detect_oracle_type(oracle.ciphertext);
 
   printf("challenge 11:\n");
-  printf("oracle chose: %s\n", oracle.encryption_type);
-  printf("result: %s\n", result);
+  printf("expected: %s\n", expected);
+  printf("actual  : %s\n", actual);
+  printf("expected == actual: %s\n", strcmp(expected, actual) == 0 ? "true" : "false");
 
-  free(result);
   free_byte_string(data);
   free_byte_string(oracle.ciphertext);
 }

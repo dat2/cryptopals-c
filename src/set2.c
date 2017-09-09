@@ -4,6 +4,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "set1.h"
 #include "set2.h"
 #include "utils.h"
 
@@ -74,4 +75,8 @@ oracle_result encryption_oracle(byte_string* self) {
   free_byte_string(key);
 
   return result;
+}
+
+const char* detect_oracle_type(byte_string* self) {
+  return is_aes_ecb(self) ? "ECB" : "CBC";
 }

@@ -267,7 +267,7 @@ byte_string* decrypt_aes_128_ecb_file(byte_string* input) {
   return result;
 }
 
-size_t detect_aes_ecb(char* file_name, char** hex_of_block) {
+size_t detect_aes_ecb(char* file_name) {
   size_t n_byte_strings;
   byte_string** lines_in_file = read_lines_hex(file_name, &n_byte_strings);
 
@@ -275,25 +275,31 @@ size_t detect_aes_ecb(char* file_name, char** hex_of_block) {
   // find ones that are equal
   size_t index_of_aes_byte_string = 0;
   for(size_t i = 0; i < n_byte_strings && index_of_aes_byte_string == 0; i++) {
-    size_t n_splits;
-    byte_string** split_byte_strings = split_byte_string(lines_in_file[i], 16, &n_splits);
-
-    // make a hash table, so we can find duplicates easy :)
-    byte_string* hash = NULL;
-    for(size_t j = 0; j < n_splits; j++) {
-      bool unique = add_byte_string(&hash, split_byte_strings[j]);
-      if(!unique) {
-        index_of_aes_byte_string = i;
-        *hex_of_block = to_hex(split_byte_strings[j]);
-        break;
-      }
+    if(is_aes_ecb(lines_in_file[i])) {
+      index_of_aes_byte_string = i;
+      break;
     }
-    clear(&hash);
-
-    free_byte_strings(split_byte_strings, n_splits);
   }
 
   // by here, we've found a line that has at least 2 blocks that are the same
   free_byte_strings(lines_in_file, n_byte_strings);
   return (index_of_aes_byte_string + 1);
+}
+
+bool is_aes_ecb(byte_string* self) {
+  size_t n_splits;
+  byte_string** split_byte_strings = split_byte_string(self, 16, &n_splits);
+
+  // make a hash table, so we can find duplicates easy :)
+  bool result = false;
+  byte_string* hash = NULL;
+  for(size_t j = 0; j < n_splits && !result; j++) {
+    bool unique = add_byte_string(&hash, split_byte_strings[j]);
+    result = result || !unique;
+  }
+  clear(&hash);
+
+  free_byte_strings(split_byte_strings, n_splits);
+
+  return result;
 }

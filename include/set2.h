@@ -12,4 +12,6 @@ byte_string* decrypt_aes_128_cbc_by_hand(byte_string* self, byte_string* key, by
 
 oracle_result encryption_oracle(byte_string* self);
 
+const char* detect_oracle_type(byte_string* self);
+
 #endif
