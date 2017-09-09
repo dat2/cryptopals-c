@@ -112,6 +112,31 @@ byte_string* repeat_byte(size_t len, byte b) {
   return result;
 }
 
+byte_string* random_bytes(size_t len) {
+  byte_string* result = new_byte_string(len);
+
+  FILE* urandom;
+  size_t total_bytes_read = 0, bytes_read = 0;
+
+  // open urandom
+  urandom = fopen("/dev/urandom", "r");
+  if(urandom == NULL) {
+    exit(-1);
+  }
+
+  // read from the urandom
+  do {
+    bytes_read = fread(result->buffer + total_bytes_read, sizeof(byte), len, urandom);
+    // TODO error handling
+    total_bytes_read += bytes_read;
+  } while(total_bytes_read < len);
+
+  // close the urandom
+  fclose(urandom);
+
+  return result;
+}
+
 // extract
 char* to_hex(byte_string* self) {
   assert(self != NULL);

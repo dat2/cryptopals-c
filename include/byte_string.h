@@ -29,6 +29,8 @@ byte_string* from_base64(const char* base64);
 
 byte_string* repeat_byte(size_t len, byte b);
 
+byte_string* random_bytes(size_t len);
+
 // extract
 char* to_hex(byte_string* self);
 

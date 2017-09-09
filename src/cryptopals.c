@@ -200,6 +200,19 @@ static void challenge10() {
   free_byte_string(decrypted);
 }
 
+static void challenge11() {
+  char* result = NULL;
+
+  byte_string* random = random_bytes(16);
+  result = to_hex(random);
+
+  printf("challenge 11:\n");
+  printf("result: %s\n", result);
+
+  free(result);
+  free_byte_string(random);
+}
+
 static void cleanup_openssl() {
   EVP_cleanup();
   ERR_free_strings();
@@ -227,7 +240,9 @@ int main(int argc, char** argv) {
   // printf("\n");
   // challenge9();
   // printf("\n");
-  challenge10();
+  // challenge10();
+  // printf("\n");
+  challenge11();
   printf("\n");
 
   cleanup_openssl();
