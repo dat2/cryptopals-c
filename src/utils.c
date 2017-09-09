@@ -158,3 +158,7 @@ byte_string* read_file_base64(char* file_name) {
   free(base64);
   return result;
 }
+
+size_t random_range(size_t min, size_t max) {
+   return min + ((size_t)rand()) / (RAND_MAX / (max - min + 1) + 1);
+}

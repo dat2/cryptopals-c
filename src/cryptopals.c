@@ -204,23 +204,16 @@ static void challenge11() {
   char* result = NULL;
 
   byte_string* data = from_ascii("Hello World, how is it going?");
-  byte_string* key = from_ascii("YELLOW SUBMARINE");
-  byte_string* random_iv = random_bytes(16);
+  byte_string* encrypted = encryption_oracle(data);
 
-  byte_string* encrypted_data = encrypt_aes_128_ecb(data, key);
-  byte_string* decrypted_data = decrypt_aes_128_ecb(encrypted_data, key);
-
-  result = to_ascii(decrypted_data);
+  result = to_ascii(encrypted);
 
   printf("challenge 11:\n");
   printf("result: %s\n", result);
 
   free(result);
   free_byte_string(data);
-  free_byte_string(key);
-  free_byte_string(random_iv);
-  free_byte_string(encrypted_data);
-  free_byte_string(decrypted_data);
+  free_byte_string(encrypted);
 }
 
 static void cleanup_openssl() {
@@ -229,6 +222,8 @@ static void cleanup_openssl() {
 }
 
 int main(int argc, char** argv) {
+
+  srand(time(NULL));
 
   init_openssl();
 

@@ -534,7 +534,7 @@ byte_string* concat_byte_strings(byte_string** array, size_t n_elements) {
 
   byte_string* result = new_byte_string(concat_length);
 
-  size_t start_copy_index;
+  size_t start_copy_index = 0;
   for(size_t i = 0; i < n_elements; i++) {
     memcpy(result->buffer + start_copy_index, array[i]->buffer, array[i]->length);
     start_copy_index += array[i]->length;

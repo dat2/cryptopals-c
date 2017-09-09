@@ -37,3 +37,38 @@ byte_string* decrypt_aes_128_cbc_by_hand(byte_string* self, byte_string* key, by
 
   return plaintext;
 }
+
+byte_string* encryption_oracle(byte_string* self) {
+
+  // prepare the plaintext
+  byte_string* prepend = random_bytes(random_range(5, 10));
+  byte_string* append = random_bytes(random_range(5, 10));
+
+  byte_string* array[3];
+  array[0] = prepend;
+  array[1] = self;
+  array[2] = append;
+
+  byte_string* plaintext = concat_byte_strings(array, 3);
+
+  // generate a random key
+  byte_string* key = random_bytes(16);
+
+  // decide ECB and CBC
+  byte_string* ciphertext = NULL;
+  if(random_range(0, 2) == 0) {
+    ciphertext = encrypt_aes_128_ecb(plaintext, key);
+  } else {
+    byte_string* random_iv = random_bytes(16);
+    ciphertext = encrypt_aes_128_cbc(plaintext, key, random_iv);
+    free_byte_string(random_iv);
+  }
+
+  // cleanup
+  free_byte_string(prepend);
+  free_byte_string(append);
+  free_byte_string(plaintext);
+  free_byte_string(key);
+
+  return ciphertext;
+}
