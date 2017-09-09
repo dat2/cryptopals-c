@@ -203,14 +203,24 @@ static void challenge10() {
 static void challenge11() {
   char* result = NULL;
 
-  byte_string* random = random_bytes(16);
-  result = to_hex(random);
+  byte_string* data = from_ascii("Hello World, how is it going?");
+  byte_string* key = from_ascii("YELLOW SUBMARINE");
+  byte_string* random_iv = random_bytes(16);
+
+  byte_string* encrypted_data = encrypt_aes_128_cbc(data, key, random_iv);
+  byte_string* decrypted_data = decrypt_aes_128_cbc(encrypted_data, key, random_iv);
+
+  result = to_ascii(decrypted_data);
 
   printf("challenge 11:\n");
   printf("result: %s\n", result);
 
   free(result);
-  free_byte_string(random);
+  free_byte_string(data);
+  free_byte_string(key);
+  free_byte_string(random_iv);
+  free_byte_string(encrypted_data);
+  free_byte_string(decrypted_data);
 }
 
 static void cleanup_openssl() {

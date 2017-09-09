@@ -4,6 +4,7 @@
 #include <string.h>
 
 #include <openssl/err.h>
+#include <openssl/evp.h>
 #include <openssl/aes.h>
 
 #include "byte_string.h"
@@ -322,6 +323,99 @@ byte_string* decrypt_aes_128_ecb(byte_string* self, byte_string* key) {
   return result;
 }
 
+static size_t pad_to_block_size(size_t length, size_t block_size) {
+  return length + (length % block_size ? (block_size - length % block_size) : 0);
+}
+
+static void handle_openssl_errors(void) {
+  ERR_print_errors_fp(stderr);
+  abort();
+}
+
+byte_string* encrypt_aes_128_cbc(byte_string* self, byte_string* key, byte_string* iv) {
+  assert(self != NULL);
+  assert(key != NULL);
+  assert(key->length == 16);
+  assert(iv->length == 16);
+
+  size_t padded_length = pad_to_block_size(self->length, 16);
+  byte_string* result = new_byte_string(padded_length);
+
+  EVP_CIPHER_CTX* ctx;
+  int len;
+  int ciphertext_len;
+
+  // create cipher ctx
+  ctx = EVP_CIPHER_CTX_new();
+  if(ctx == NULL) {
+    handle_openssl_errors();
+  }
+
+  // initialize cipher ctx
+  if(1 != EVP_EncryptInit_ex(ctx, EVP_aes_128_cbc(), NULL, key->buffer, iv->buffer)) {
+    handle_openssl_errors();
+  }
+
+  // start encrypting
+  if(1 != EVP_EncryptUpdate(ctx, result->buffer, &len, self->buffer, self->length)) {
+    handle_openssl_errors();
+  }
+  ciphertext_len = len;
+
+  // finalize encryption
+  if(1 != EVP_EncryptFinal_ex(ctx, result->buffer + len, &len)) {
+    handle_openssl_errors();
+  }
+  ciphertext_len += len;
+
+  // cleanup
+  EVP_CIPHER_CTX_free(ctx);
+
+  return result;
+}
+
+byte_string* decrypt_aes_128_cbc(byte_string* self, byte_string* key, byte_string* iv) {
+  assert(self != NULL);
+  assert(key != NULL);
+  assert(key->length == 16);
+  assert(iv->length == 16);
+
+  size_t padded_length = pad_to_block_size(self->length, 16);
+  byte_string* result = new_byte_string(padded_length);
+
+  EVP_CIPHER_CTX* ctx;
+  int len;
+  int ciphertext_len;
+
+  // create cipher ctx
+  ctx = EVP_CIPHER_CTX_new();
+  if(ctx == NULL) {
+    handle_openssl_errors();
+  }
+
+  // initialize cipher ctx
+  if(1 != EVP_DecryptInit_ex(ctx, EVP_aes_128_cbc(), NULL, key->buffer, iv->buffer)) {
+    handle_openssl_errors();
+  }
+
+  // start dcrypting
+  if(1 != EVP_DecryptUpdate(ctx, result->buffer, &len, self->buffer, self->length)) {
+    handle_openssl_errors();
+  }
+  ciphertext_len = len;
+
+  // finalize dcryption
+  if(1 != EVP_DecryptFinal_ex(ctx, result->buffer + len, &len)) {
+    handle_openssl_errors();
+  }
+  ciphertext_len += len;
+
+  // cleanup
+  EVP_CIPHER_CTX_free(ctx);
+
+  return result;
+}
+
 byte_string** split_byte_string(byte_string* self, size_t n_bytes, size_t* num_byte_strings) {
   assert(self != NULL);
   assert(num_byte_strings != NULL);
@@ -373,8 +467,7 @@ byte_string* pad_pkcs7(byte_string* self, size_t block_size) {
   assert(block_size >= 0);
 
   // allocate the result
-  size_t n_blocks = self->length / block_size + (self->length % block_size > 0);
-  byte_string* result = new_byte_string(n_blocks * block_size);
+  byte_string* result = new_byte_string(pad_to_block_size(self->length, block_size));
   memcpy(result->buffer, self->buffer, self->length);
 
   // calculate the padding, apply it to the result
