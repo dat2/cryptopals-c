@@ -593,23 +593,28 @@ void free_byte_strings(byte_string** array, size_t n_elements) {
 }
 
 // hash stuff
-bool add_byte_string(byte_string** hash, byte_string* element) {
+bool insert(byte_string** hash, byte_string* key, byte_string* value) {
   assert(hash != NULL);
-  assert(element != NULL);
+  assert(key != NULL);
+  assert(value != NULL);
 
-  if(find_byte_string(*hash,element) != NULL) {
-    return false;
-  } else {
-    HASH_ADD_KEYPTR(hh, *hash, element->buffer, element->length, element);
+  if(find(*hash, key) == NULL) {
+    HASH_ADD_KEYPTR(hh, *hash, key->buffer, key->length, value);
     return true;
+  } else {
+    return false;
   }
 }
 
-byte_string* find_byte_string(byte_string* hash, byte_string* element) {
-  assert(element != NULL);
+bool insert_key_as_value(byte_string** hash, byte_string* element) {
+  return insert(hash, element, element);
+}
+
+byte_string* find(byte_string* hash, byte_string* key) {
+  assert(key != NULL);
 
   byte_string* out = NULL;
-  HASH_FIND(hh, hash, element->buffer, element->length, out);
+  HASH_FIND(hh, hash, key->buffer, key->length, out);
   return out;
 }
 

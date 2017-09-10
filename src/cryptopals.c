@@ -219,11 +219,12 @@ static void challenge12() {
 
   byte_string* decrypted = decrypt_unknown_string(encryption_oracle_ecb);
 
-  result = "";
+  result = to_ascii(decrypted);
 
   printf("challenge 12:\n");
   printf("result: %s\n", result);
 
+  free(result);
   free_byte_string(decrypted);
 }
 

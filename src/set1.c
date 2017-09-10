@@ -294,7 +294,7 @@ bool is_aes_ecb(byte_string* self) {
   bool result = false;
   byte_string* hash = NULL;
   for(size_t j = 0; j < n_splits && !result; j++) {
-    bool unique = add_byte_string(&hash, split_byte_strings[j]);
+    bool unique = insert_key_as_value(&hash, split_byte_strings[j]);
     result = result || !unique;
   }
   clear(&hash);
