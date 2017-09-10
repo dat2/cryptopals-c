@@ -42,8 +42,6 @@ char* to_ascii(byte_string* self);
 
 char* to_base64(byte_string* self);
 
-byte_string* substring(byte_string* self, size_t start, size_t end);
-
 // operations
 int hamming_distance(byte_string* a, byte_string* b);
 

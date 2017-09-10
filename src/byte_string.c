@@ -269,17 +269,6 @@ char* to_base64(byte_string* self) {
   return out;
 }
 
-byte_string* substring(byte_string* self, size_t start, size_t end) {
-  assert(self != NULL);
-  assert(self->length >= 0);
-  assert(start >= 0 && start < self->length);
-  assert(end >= 0 && end < self->length && end > start);
-
-  byte_string* result = new_byte_string(end - start);
-  memcpy(result->buffer, self->buffer + start, end - start);
-  return result;
-}
-
 // util operations
 int hamming_distance(byte_string* a, byte_string* b) {
   assert(a != NULL);
