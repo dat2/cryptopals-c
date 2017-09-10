@@ -193,43 +193,6 @@ byte_string* decrypt_unknown_string(encryption_oracle_func oracle) {
   return result;
 }
 
-bool insert_map(map** self, const char* key, const char* value) {
-  assert(self != NULL);
-  assert(key != NULL);
-  assert(value != NULL);
-
-  map* item = malloc(sizeof(map));
-  assert(item != NULL);
-  item->key = key;
-  item->value = value;
-
-  if(find_map(*self, item->key) == NULL) {
-    HASH_ADD_KEYPTR(hh, *self, item->key, strlen(item->key), item);
-    return true;
-  } else {
-    return false;
-  }
-}
-
-const char* find_map(map* self, const char* key) {
-  assert(key != NULL);
-
-  map* out = NULL;
-  HASH_FIND_STR(self, key, out);
-  return out == NULL ? NULL : out->value;
-}
-
-void iter_map(map* self, map_iter_func f) {
-  map *each, *tmp;
-  HASH_ITER(hh, self, each, tmp) {
-    f(each->key, each->value);
-  }
-}
-
-void clear_map(map** self) {
-  HASH_CLEAR(hh, *self);
-}
-
 map* parse_query_string(const char* qs) {
   map* m = NULL;
 
