@@ -12,6 +12,7 @@
 
 // construction
 byte_string* new_byte_string(size_t len) {
+  assert(len >= 0);
 
   // malloc buffer
   byte* buffer = (byte*) calloc(len, sizeof(byte));
@@ -142,6 +143,18 @@ byte_string* random_bytes(size_t len) {
 
 byte_string* empty_byte_string() {
   return new_byte_string(0);
+}
+
+byte_string* substring(byte_string* self, size_t start, size_t end) {
+  assert(self != NULL);
+  assert(start >= 0);
+  assert(start <= self->length);
+  assert(end >= start);
+  assert(end <= self->length);
+
+  byte_string* result = new_byte_string(end - start);
+  memcpy(result->buffer, self->buffer + start, result->length);
+  return result;
 }
 
 // extract

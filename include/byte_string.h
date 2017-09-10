@@ -33,6 +33,8 @@ byte_string* random_bytes(size_t len);
 
 byte_string* empty_byte_string();
 
+byte_string* substring(byte_string* self, size_t start, size_t end);
+
 // extract
 char* to_hex(byte_string* self);
 

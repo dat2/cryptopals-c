@@ -148,6 +148,31 @@ byte_string* decrypt_unknown_string(encryption_oracle_func oracle) {
   }
 
   // step 3: create an input block, that is 1 byte short
+  byte_string* input_block = new_byte_string(block_size - 1);
+  byte_string* ciphertext_block = oracle(input_block);
+
+  // step 4: make a dictionary
+  byte dictionary[256];
+  for(size_t i = 0; i < 256; i++) {
+    // AA..AAA, AA..AAB, AA..AAC, ...
+    byte_string* plaintext = new_byte_string(block_size);
+    plaintext->buffer[block_size - 1] = (byte) i;
+
+    // map ciphertext byte to plaintext byte
+    byte_string* ciphertext = oracle(plaintext);
+    size_t index = (size_t) ciphertext->buffer[block_size - 1];
+    dictionary[index] = i;
+
+    free_byte_string(plaintext);
+    free_byte_string(ciphertext);
+  }
+
+  // step 5: match output of input_block to dictionary
+  byte cipher_byte = ciphertext_block->buffer[block_size - 1];
+  size_t index = (size_t) ciphertext_block->buffer[block_size - 1];
+
+  free_byte_string(input_block);
+  free_byte_string(ciphertext_block);
 
   byte_string* result = new_byte_string(result_length);
 
