@@ -104,3 +104,25 @@ byte_string* encryption_oracle_ecb(byte_string* self) {
 
   return ciphertext;
 }
+
+byte_string* decrypt_unknown_string(encryption_oracle_func oracle) {
+
+  // step 0: figure out how many bytes to allocate for the result
+  size_t result_length = 0;
+  byte_string* empty = empty_byte_string();
+  byte_string* unknown_ciphertext_padded = oracle(empty);
+  result_length = unknown_ciphertext_padded->length;
+  free_byte_string(empty);
+  free_byte_string(unknown_ciphertext_padded);
+
+  byte_string* result = new_byte_string(result_length);
+
+  // step 1: discover the block size of the cipher
+  size_t block_size = 0;
+
+  // step 2: detect that it is using ECB
+
+  // step 3: create an input block, that is 1 byte short
+
+  return result;
+}

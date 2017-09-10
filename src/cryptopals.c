@@ -217,16 +217,14 @@ static void challenge11() {
 static void challenge12() {
   char* result = NULL;
 
-  byte_string* data = from_ascii("HELLO WORLD     HELLO WORLD     HELLO WORLD     HELLO WORLD     HELLO WORLD     HELLO WORLD     ");
-  byte_string* encrypted = encryption_oracle_ecb(data);
+  byte_string* decrypted = decrypt_unknown_string(encryption_oracle_ecb);
 
   result = "";
 
   printf("challenge 12:\n");
   printf("result: %s\n", result);
 
-  free_byte_string(data);
-  free_byte_string(encrypted);
+  free_byte_string(decrypted);
 }
 
 static void cleanup_openssl() {

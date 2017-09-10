@@ -140,6 +140,10 @@ byte_string* random_bytes(size_t len) {
   return result;
 }
 
+byte_string* empty_byte_string() {
+  return new_byte_string(0);
+}
+
 // extract
 char* to_hex(byte_string* self) {
   assert(self != NULL);

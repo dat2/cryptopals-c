@@ -31,6 +31,8 @@ byte_string* repeat_byte(size_t len, byte b);
 
 byte_string* random_bytes(size_t len);
 
+byte_string* empty_byte_string();
+
 // extract
 char* to_hex(byte_string* self);
 

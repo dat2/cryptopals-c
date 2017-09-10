@@ -11,4 +11,8 @@ const char* detect_oracle_type(byte_string* self);
 
 byte_string* encryption_oracle_ecb(byte_string* self);
 
+typedef byte_string* encryption_oracle_func(byte_string*);
+
+byte_string* decrypt_unknown_string(encryption_oracle_func oracle);
+
 #endif
