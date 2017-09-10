@@ -119,6 +119,20 @@ byte_string* decrypt_unknown_string(encryption_oracle_func oracle) {
 
   // step 1: discover the block size of the cipher
   size_t block_size = 0;
+  for(size_t length = 1; block_size == 0; length++) {
+    byte_string* repeated = new_byte_string(length);
+
+    // the oracle will pad the repeated string to a multiple of the block size
+    // we know that result_length is a (block_size * n)
+    // once length becomes (block_size * n) + 1, oracle will pad it to (block_size * (n + 1))
+    byte_string* ciphertext = oracle(repeated);
+    if(ciphertext->length > result_length) {
+      block_size = ciphertext->length - result_length;
+    }
+
+    free_byte_string(repeated);
+    free_byte_string(ciphertext);
+  }
 
   // step 2: detect that it is using ECB
 
