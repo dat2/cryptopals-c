@@ -115,8 +115,6 @@ byte_string* decrypt_unknown_string(encryption_oracle_func oracle) {
   free_byte_string(empty);
   free_byte_string(unknown_ciphertext_padded);
 
-  byte_string* result = new_byte_string(result_length);
-
   // step 1: discover the block size of the cipher
   size_t block_size = 0;
   for(size_t length = 1; block_size == 0; length++) {
@@ -135,8 +133,23 @@ byte_string* decrypt_unknown_string(encryption_oracle_func oracle) {
   }
 
   // step 2: detect that it is using ECB
+  bool is_ecb = false;
+  for(size_t i = 1; i < block_size && !is_ecb; i++) {
+    byte_string* plaintext = new_byte_string(block_size * i);
+    byte_string* ciphertext = oracle(plaintext);
+    is_ecb = is_aes_ecb(ciphertext);
+    free_byte_string(plaintext);
+    free_byte_string(ciphertext);
+  }
+  if(!is_ecb) {
+    // uh oh
+    fprintf(stderr, "This oracle is not using ECB to encrypt its data.\n");
+    return NULL;
+  }
 
   // step 3: create an input block, that is 1 byte short
+
+  byte_string* result = new_byte_string(result_length);
 
   return result;
 }
