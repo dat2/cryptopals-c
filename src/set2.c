@@ -192,3 +192,123 @@ byte_string* decrypt_unknown_string(encryption_oracle_func oracle) {
 
   return result;
 }
+
+bool insert_map(map** self, const char* key, const char* value) {
+  assert(self != NULL);
+  assert(key != NULL);
+  assert(value != NULL);
+
+  map* item = malloc(sizeof(map));
+  assert(item != NULL);
+  item->key = key;
+  item->value = value;
+
+  if(find_map(*self, item->key) == NULL) {
+    HASH_ADD_KEYPTR(hh, *self, item->key, strlen(item->key), item);
+    return true;
+  } else {
+    return false;
+  }
+}
+
+const char* find_map(map* self, const char* key) {
+  assert(key != NULL);
+
+  map* out = NULL;
+  HASH_FIND_STR(self, key, out);
+  return out == NULL ? NULL : out->value;
+}
+
+void iter_map(map* self, map_iter_func f) {
+  map *each, *tmp;
+  HASH_ITER(hh, self, each, tmp) {
+    f(each->key, each->value);
+  }
+}
+
+void clear_map(map** self) {
+  HASH_CLEAR(hh, *self);
+}
+
+map* parse_query_string(const char* qs) {
+  map* m = NULL;
+
+  size_t qs_len = strlen(qs), i = 0, len;
+  const char *current = qs, *next = qs;
+
+  do {
+    // parse key
+    next = strchr(current, (int) '=');
+    len = (next - current);
+    char* key = malloc(sizeof(char) * len);
+    assert(key != NULL);
+    strncpy(key, current, len);
+    current = next + 1;
+
+    // parse value
+    next = strchr(current, (int) '&');
+    if(next == NULL) { next = qs + qs_len; }
+    len = (next - current);
+    char* value = malloc(sizeof(char) * len);
+    assert(value != NULL);
+    strncpy(value, current, len);
+    current = next + 1;
+
+    // insert
+    insert_map(&m, key, value);
+    i = current - qs;
+
+  } while(i < qs_len);
+
+  return m;
+}
+
+char* encode_qs(map* self) {
+
+  // calculate result length
+  size_t result_len = 0;
+  map *each, *tmp;
+  HASH_ITER(hh, self, each, tmp) {
+    result_len += strlen(each->key) + 1 + strlen(each->value) + 1;
+  }
+
+  // create result
+  char* result = malloc(sizeof(char) * (result_len + 1));
+  assert(result != NULL);
+
+  size_t index = 0;
+  HASH_ITER(hh, self, each, tmp) {
+    strcpy(result + index, each->key);
+    index += strlen(each->key);
+
+    result[index] = '=';
+    index++;
+
+    strcpy(result + index, each->value);
+    index += strlen(each->value);
+
+    result[index] = '&';
+    index++;
+  }
+  result[result_len - 1] = '\0';
+
+  return result;
+}
+
+char* profile_for(const char* email) {
+  assert(email != NULL);
+  assert(strchr(email, '&') == NULL);
+  assert(strchr(email, '=') == NULL);
+
+  // create a map
+  map* m = NULL;
+  insert_map(&m, "email", email);
+  insert_map(&m, "uid", "10");
+  insert_map(&m, "role", "user");
+
+  char* result = encode_qs(m);
+
+  clear_map(&m);
+
+  return result;
+}

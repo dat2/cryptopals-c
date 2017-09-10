@@ -14,18 +14,15 @@
 byte_string* new_byte_string(size_t len) {
   assert(len >= 0);
 
-  // malloc buffer
   byte* buffer = (byte*) calloc(len, sizeof(byte));
-  if(buffer == NULL) {
-    exit(-3);
-  }
-  // malloc result
+  assert(buffer != NULL);
+
   byte_string* result = malloc(sizeof(byte_string));
-  if(result == NULL) {
-    exit(-3);
-  }
+  assert(result != NULL);
+
   result->length = len;
   result->buffer = buffer;
+
   return result;
 }
 
@@ -124,9 +121,7 @@ byte_string* random_bytes(size_t len) {
 
   // open urandom
   urandom = fopen("/dev/urandom", "r");
-  if(urandom == NULL) {
-    exit(-1);
-  }
+  assert(urandom != NULL);
 
   // read from the urandom
   do {
@@ -168,10 +163,7 @@ char* to_hex(byte_string* self) {
   assert(self != NULL);
 
   char* out = (char*) calloc(self->length * 2 + 1, sizeof(char));
-  if(out == NULL) {
-    exit(-3);
-    return NULL;
-  }
+  assert(out != NULL);
 
   for(size_t i = 0; i < self->length; i++) {
     snprintf(out + (i * 2), 3, "%02x", self->buffer[i]);
@@ -193,10 +185,7 @@ char* to_ascii(byte_string* self) {
   assert(self != NULL);
 
   char* out = (char*) calloc(self->length * 5 + 1, sizeof(char));
-  if(out == NULL) {
-    exit(-3);
-    return NULL;
-  }
+  assert(out != NULL);
 
   size_t index = 0;
   for(size_t i = 0; i < self->length; i++) {
@@ -248,10 +237,7 @@ char* to_base64(byte_string* self) {
   assert(self->length >= 0);
 
   char* out = calloc(self->length * 4 / 3 + 1, sizeof(char));
-  if(out == NULL) {
-    exit(-3);
-    return NULL;
-  }
+  assert(out != NULL);
 
   for(size_t i = 0, j = 0; i < self->length; i += 3, j += 4) {
     bool has_one_byte = (i + 1) >= self->length;

@@ -228,6 +228,21 @@ static void challenge12() {
   free_byte_string(decrypted);
 }
 
+static void print_each(const char* key, const char* value) {
+  printf("%s => %s\n", key, value);
+}
+
+static void challenge13() {
+  char* result = NULL;
+
+  result = profile_for("foo@bar.com");
+
+  printf("challenge 13:\n");
+  printf("result: %s\n", result);
+
+  free(result);
+}
+
 static void cleanup_openssl() {
   EVP_cleanup();
   ERR_free_strings();
@@ -261,7 +276,9 @@ int main(int argc, char** argv) {
   // printf("\n");
   // challenge11();
   // printf("\n");
-  challenge12();
+  // challenge12();
+  // printf("\n");
+  challenge13();
   printf("\n");
 
   cleanup_openssl();
