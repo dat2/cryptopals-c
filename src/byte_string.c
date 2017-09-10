@@ -145,6 +145,12 @@ byte_string* empty_byte_string() {
   return new_byte_string(0);
 }
 
+byte_string* single_byte(byte b) {
+  byte_string* result = new_byte_string(1);
+  result->buffer[0] = b;
+  return result;
+}
+
 byte_string* substring(byte_string* self, size_t start, size_t end) {
   assert(self != NULL);
   assert(start >= 0);

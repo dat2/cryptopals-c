@@ -150,35 +150,44 @@ byte_string* decrypt_unknown_string(encryption_oracle_func oracle) {
   byte_string* result = new_byte_string(result_length);
 
   // discover the first block worth of bytes
-  for(size_t i = 0; i < 1; i++) {
+  for(size_t i = 0; i < result_length; i++) {
+    // n is the current block
+    size_t n = i / block_size;
+
+    // step 3: create an input block, that is 1 byte short
+    byte_string* plaintext_block = new_byte_string(block_size - i % block_size - 1);
+    byte_string* ciphertext = oracle(plaintext_block);
+    byte_string* last_ciphertext_block = substring(ciphertext, n * block_size, (n + 1) * block_size);
 
     // step 4: make a dictionary of ciphertext => plaintext
     byte_string* dictionary = NULL;
     for(size_t b = 0; b < 256; b++) {
-      byte_string* plaintext = new_byte_string(block_size);
-      plaintext->buffer[block_size - (i + 1)] = b;
+      // plaintext is always <zero_prefix><result><variable_byte>
+      byte_string* array[3];
+      array[0] = new_byte_string(block_size - i % block_size - 1);
+      array[1] = substring(result, 0, i);
+      array[2] = single_byte(b);
+      byte_string* plaintext = concat_byte_strings(array, 3);
+      free_byte_strings(array, 3);
 
+      // we only care about the nth block for the dictionary
       byte_string* ciphertext = oracle(plaintext);
-      byte_string* ciphertext_block = substring(ciphertext, 0, block_size);
+      byte_string* last_ciphertext_block = substring(ciphertext, n * block_size, (n + 1) * block_size);
       free_byte_string(ciphertext);
 
-      assert(insert(&dictionary, ciphertext_block, plaintext));
+      assert(insert(&dictionary, last_ciphertext_block, plaintext));
     }
 
-    // step 3: create an input block, that is 1 byte short
-    byte_string* plaintext_block = new_byte_string(block_size - 1);
-    byte_string* ciphertext = oracle(plaintext_block);
-    byte_string* ciphertext_block = substring(ciphertext, 0, block_size);
-
     // step 5: match output of input_block to dictionary
-    byte_string* plaintext = find(dictionary, ciphertext_block);
-    assert(plaintext != NULL);
-    result->buffer[i] = plaintext->buffer[block_size - (i + 1)];
+    byte_string* plaintext = find(dictionary, last_ciphertext_block);
+    if(plaintext != NULL) {
+      result->buffer[i] = plaintext->buffer[plaintext->length - 1];
+    }
 
     clear(&dictionary);
     free_byte_string(plaintext_block);
     free_byte_string(ciphertext);
-    free_byte_string(ciphertext_block);
+    free_byte_string(last_ciphertext_block);
   }
 
   return result;
