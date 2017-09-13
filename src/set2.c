@@ -258,7 +258,16 @@ char* encode_qs(map* self) {
   return result;
 }
 
-char* profile_for(const char* email) {
+byte_string* get_static_key() {
+  static byte_string* KEY = NULL;
+  if(KEY == NULL) {
+    KEY = random_bytes(16);
+  }
+  assert(KEY != NULL);
+  return KEY;
+}
+
+byte_string* profile_for(const char* email) {
   assert(email != NULL);
   assert(strchr(email, '&') == NULL);
   assert(strchr(email, '=') == NULL);
@@ -268,10 +277,32 @@ char* profile_for(const char* email) {
   insert_map(&m, "email", email);
   insert_map(&m, "uid", "10");
   insert_map(&m, "role", "user");
-
-  char* result = encode_qs(m);
-
+  char* encoded_map = encode_qs(m);
   clear_map(&m);
 
+  // encrypt the thing under a random key
+  byte_string* plaintext = from_ascii(encoded_map);
+  byte_string* ciphertext = encrypt_aes_128_ecb(plaintext, get_static_key());
+
+  free(encoded_map);
+  free_byte_string(plaintext);
+
+  return ciphertext;
+}
+
+char* read_encrypted_profile(byte_string* ciphertext) {
+  assert(ciphertext != NULL);
+  byte_string* plaintext = decrypt_aes_128_ecb(ciphertext, get_static_key());
+  byte_string* trimmed = rtrim(plaintext);
+  byte_string* unpadded = remove_pkcs7_padding(trimmed);
+  byte_string* unpadded_trimmed = rtrim(unpadded);
+  char* result = to_ascii(unpadded_trimmed);
+  if(unpadded_trimmed != unpadded) {
+    free_byte_string(unpadded_trimmed);
+  }
+  free_byte_string(unpadded);
+  free_byte_string(trimmed);
+  free_byte_string(plaintext);
+  free_byte_string(ciphertext);
   return result;
 }

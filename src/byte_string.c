@@ -158,6 +158,19 @@ byte_string* substring(byte_string* self, size_t start, size_t end) {
   return result;
 }
 
+byte_string* rtrim(byte_string* self) {
+  assert(self != NULL);
+  assert(self->length >= 0);
+
+  size_t i = self->length - 1;
+  for(; i > 0 && self->buffer[i] == 0; i--) {
+    // keep decrementing
+  }
+  byte_string* result = new_byte_string(i + 1);
+  memcpy(result->buffer, self->buffer, result->length);
+  return result;
+}
+
 // extract
 char* to_hex(byte_string* self) {
   assert(self != NULL);
@@ -566,6 +579,27 @@ byte_string* pad_pkcs7(byte_string* self, size_t block_size) {
   memset(result->buffer + self->length, n_padding, n_padding);
 
   return result;
+}
+
+byte_string* remove_pkcs7_padding(byte_string* self) {
+  assert(self != NULL);
+  assert(self->length >= 0);
+
+  byte last_byte = self->buffer[self->length - 1];
+  // first, check that the elements are all there
+  size_t i = self->length - 1;
+  for(; i > 0 && self->buffer[i] == last_byte; i--) {
+    // keep decrementing
+  }
+  // if all the bytes are the same at the end, then we know it's been padded
+  // and we can just rtrim it
+  if(self->length - last_byte == (i + 1)) {
+    byte_string* result = new_byte_string(self->length - last_byte);
+    memcpy(result->buffer, self->buffer, result->length);
+    return result;
+  } else {
+    return self;
+  }
 }
 
 // destruction

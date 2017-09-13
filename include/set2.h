@@ -23,6 +23,10 @@ map* parse_query_string(const char* qs);
 
 char* encode_qs(map* self);
 
-char* profile_for(const char* email);
+byte_string* get_static_key();
+
+byte_string* profile_for(const char* email);
+
+char* read_encrypted_profile(byte_string* ciphertext);
 
 #endif

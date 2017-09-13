@@ -234,8 +234,8 @@ static void print_each(const char* key, const char* value) {
 
 static void challenge13() {
   char* result = NULL;
-
-  result = profile_for("foo@bar.com");
+  byte_string* encrypted_profile = profile_for("foo@bar.com");
+  result = read_encrypted_profile(encrypted_profile);
 
   printf("challenge 13:\n");
   printf("result: %s\n", result);

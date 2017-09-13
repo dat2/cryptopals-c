@@ -37,6 +37,8 @@ byte_string* single_byte(byte b);
 
 byte_string* substring(byte_string* self, size_t start, size_t end);
 
+byte_string* rtrim(byte_string* self);
+
 // extract
 char* to_hex(byte_string* self);
 
@@ -69,6 +71,8 @@ byte_string* encrypt_aes_128_cbc(byte_string* self, byte_string* key, byte_strin
 byte_string* decrypt_aes_128_cbc(byte_string* self, byte_string* key, byte_string* iv);
 
 byte_string* pad_pkcs7(byte_string* self, size_t block_size);
+
+byte_string* remove_pkcs7_padding(byte_string* self);
 
 // destruction
 void free_byte_string(byte_string* self);
