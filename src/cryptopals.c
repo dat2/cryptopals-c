@@ -216,9 +216,7 @@ static void challenge11() {
 
 static void challenge12() {
   char* result = NULL;
-
   byte_string* decrypted = decrypt_unknown_string(encryption_oracle_ecb);
-
   result = to_ascii(decrypted);
 
   printf("challenge 12:\n");
@@ -228,10 +226,6 @@ static void challenge12() {
   free_byte_string(decrypted);
 }
 
-static void print_each(const char* key, const char* value) {
-  printf("%s => %s\n", key, value);
-}
-
 static void challenge13() {
   char* result = NULL;
   byte_string* encrypted_profile = create_admin_profile();
@@ -239,9 +233,21 @@ static void challenge13() {
 
   printf("challenge 13:\n");
   printf("result: %s\n", result);
-  printf("admin : %s", strstr(result, "admin") ? "true" : "false");
+  printf("admin : %s\n", strstr(result, "admin") ? "true" : "false");
 
   free(result);
+}
+
+static void challenge14() {
+  char* result = NULL;
+  byte_string* decrypted = decrypt_unknown_string_with_random_prefix(encryption_oracle_ecb_random_prefix);
+  result = to_ascii(decrypted);
+
+  printf("challenge 14:\n");
+  printf("result: %s\n", result);
+
+  free(result);
+  free_byte_string(decrypted);
 }
 
 static void cleanup_openssl() {
@@ -279,7 +285,9 @@ int main(int argc, char** argv) {
   // printf("\n");
   // challenge12();
   // printf("\n");
-  challenge13();
+  // challenge13();
+  // printf("\n");
+  challenge14();
   printf("\n");
 
   cleanup_openssl();

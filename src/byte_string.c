@@ -598,7 +598,9 @@ byte_string* unpad_pkcs7(byte_string* self) {
     memcpy(result->buffer, self->buffer, result->length);
     return result;
   } else {
-    return self;
+    byte_string* result = new_byte_string(self->length);
+    memcpy(result->buffer, self->buffer, self->length);
+    return result;
   }
 }
 

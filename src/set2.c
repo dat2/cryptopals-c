@@ -33,11 +33,13 @@ byte_string* decrypt_aes_128_cbc_by_hand(byte_string* self, byte_string* key, by
   }
 
   byte_string* plaintext = concat_byte_strings(plaintexts, num_blocks);
+  byte_string* result = unpad_pkcs7(plaintext);
 
   free_byte_strings(ciphertexts, num_blocks);
   free_byte_strings(plaintexts, num_blocks);
+  free_byte_string(plaintext);
 
-  return plaintext;
+  return result;
 }
 
 byte_string* encryption_oracle(byte_string* self, const char** out) {
@@ -190,6 +192,13 @@ byte_string* decrypt_unknown_string(encryption_oracle_func oracle) {
     free_byte_string(last_ciphertext_block);
   }
 
+  // trim and unpad
+  byte_string* trimmed = rtrim(result);
+  free_byte_string(result);
+  byte_string* unpadded = unpad_pkcs7(trimmed);
+  free_byte_string(trimmed);
+  result = unpadded;
+
   return result;
 }
 
@@ -321,11 +330,8 @@ byte_string* create_admin_profile() {
   byte_string* padded_email_profile = profile_for("aaaaaaaaaaaaa");
   byte_string* prefix = substring(padded_email_profile, 0, 32);
 
-  // cut and paste "prefix" and "admin block" together
-  byte_string* array[2];
-  array[0] = prefix;
-  array[1] = suffix;
-  byte_string* result = concat_byte_strings(array, 2);
+  // cut and paste
+  byte_string* result = append_byte_string(prefix, suffix);
 
   // clear stuff
   free_byte_string(garbage_profile);
@@ -334,4 +340,41 @@ byte_string* create_admin_profile() {
   free_byte_string(prefix);
 
   return result;
+}
+
+byte_string* encryption_oracle_ecb_random_prefix(byte_string* self) {
+
+  // static variables
+  static bool initialized = false;
+  static byte_string* RANDOM_PREFIX;
+  static byte_string* KEY = NULL;
+  static byte_string* APPEND = NULL;
+  if(!initialized) {
+    RANDOM_PREFIX = random_bytes(random_range(0, 100));
+    KEY = random_bytes(16);
+    APPEND = from_base64(
+      "Um9sbGluJyBpbiBteSA1LjAKV2l0aCBteSByYWctdG9wIGRvd24gc28gbXkg"
+      "aGFpciBjYW4gYmxvdwpUaGUgZ2lybGllcyBvbiBzdGFuZGJ5IHdhdmluZyBq"
+      "dXN0IHRvIHNheSBoaQpEaWQgeW91IHN0b3A/IE5vLCBJIGp1c3QgZHJvdmUg"
+      "YnkK"
+    );
+    initialized = true;
+  }
+
+  byte_string* array[3];
+  array[0] = RANDOM_PREFIX;
+  array[1] = self;
+  array[2] = APPEND;
+  byte_string* plaintext = concat_byte_strings(array, 3);
+  byte_string* ciphertext = encrypt_aes_128_ecb(plaintext, KEY);
+  free_byte_string(plaintext);
+
+  return ciphertext;
+}
+
+byte_string* decrypt_unknown_string_with_random_prefix(encryption_oracle_func oracle) {
+
+  // step 0: figure out how many bytes to allocate for the result
+
+  return empty_byte_string();
 }

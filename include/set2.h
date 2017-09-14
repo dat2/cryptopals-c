@@ -31,4 +31,9 @@ char* read_encrypted_profile(byte_string* ciphertext);
 
 byte_string* create_admin_profile();
 
+// challenge 14
+byte_string* encryption_oracle_ecb_random_prefix(byte_string* self);
+
+byte_string* decrypt_unknown_string_with_random_prefix(encryption_oracle_func oracle);
+
 #endif
