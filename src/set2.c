@@ -294,7 +294,7 @@ char* read_encrypted_profile(byte_string* ciphertext) {
   assert(ciphertext != NULL);
   byte_string* plaintext = decrypt_aes_128_ecb(ciphertext, get_static_key());
   byte_string* trimmed = rtrim(plaintext);
-  byte_string* unpadded = remove_pkcs7_padding(trimmed);
+  byte_string* unpadded = unpad_pkcs7(trimmed);
   byte_string* unpadded_trimmed = rtrim(unpadded);
   char* result = to_ascii(unpadded_trimmed);
   if(unpadded_trimmed != unpadded) {
@@ -304,5 +304,34 @@ char* read_encrypted_profile(byte_string* ciphertext) {
   free_byte_string(trimmed);
   free_byte_string(plaintext);
   free_byte_string(ciphertext);
+  return result;
+}
+
+byte_string* create_admin_profile() {
+  // garbage profile looks like this
+  // ["email=0000000000"]["admin<padded>"]["&uid=10&role=use"]["r<padded>"]
+  // so, we just grab the second block
+  byte_string* garbage_profile = profile_for("0000000000admin\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b\x0b");
+  byte_string* suffix = substring(garbage_profile, 16, 32);
+
+  // padded email profile looks like this
+  // ["email=aaaaaaaaaa"]["aaa&uid=10&role="]["user<padded>"]
+  // so, we just cut and paste suffix into the last block there like this
+  // ["email=aaaaaaaaaa"]["aaa&uid=10&role="]["admin<padded>"]
+  byte_string* padded_email_profile = profile_for("aaaaaaaaaaaaa");
+  byte_string* prefix = substring(padded_email_profile, 0, 32);
+
+  // cut and paste "prefix" and "admin block" together
+  byte_string* array[2];
+  array[0] = prefix;
+  array[1] = suffix;
+  byte_string* result = concat_byte_strings(array, 2);
+
+  // clear stuff
+  free_byte_string(garbage_profile);
+  free_byte_string(padded_email_profile);
+  free_byte_string(suffix);
+  free_byte_string(prefix);
+
   return result;
 }

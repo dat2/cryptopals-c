@@ -581,7 +581,7 @@ byte_string* pad_pkcs7(byte_string* self, size_t block_size) {
   return result;
 }
 
-byte_string* remove_pkcs7_padding(byte_string* self) {
+byte_string* unpad_pkcs7(byte_string* self) {
   assert(self != NULL);
   assert(self->length >= 0);
 

@@ -29,4 +29,6 @@ byte_string* profile_for(const char* email);
 
 char* read_encrypted_profile(byte_string* ciphertext);
 
+byte_string* create_admin_profile();
+
 #endif
