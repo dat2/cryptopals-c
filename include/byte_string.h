@@ -42,6 +42,8 @@ byte_string* rtrim(byte_string* self);
 // extract
 char* to_hex(byte_string* self);
 
+char* to_hex_blocks(byte_string* self);
+
 char* to_ascii(byte_string* self);
 
 char* to_base64(byte_string* self);

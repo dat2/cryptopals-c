@@ -194,6 +194,33 @@ static char num_to_hex(byte b) {
   }
 }
 
+char* to_hex_blocks(byte_string* self) {
+  assert(self != NULL);
+
+  size_t num_blocks = self->length / 16 + (self->length % 16 > 0);
+  size_t padded_to_block_length = self->length + (self->length % 16 > 0 ? 16 - self->length % 16 : 0);
+  size_t out_length = padded_to_block_length * 2 + (num_blocks - 1 > 0 ? num_blocks - 1 : 0) * 2 + 2 + 1;
+  char* out = (char*) malloc(out_length * sizeof(char));
+  assert(out != NULL);
+
+  out[0] = '[';
+  size_t bracket_offset = 1;
+  for(size_t i = 0; i < self->length; i++) {
+    snprintf(out + (i * 2) + bracket_offset, 3, "%02x", self->buffer[i]);
+    if((i + 1) % 16 == 0) {
+      bracket_offset += 2;
+      snprintf(out + (i * 2) + bracket_offset, 3, "][");
+    }
+  }
+  for(size_t i = self->length * 2 + bracket_offset; i < out_length; i += 2) {
+    out[i] = ' ';
+    out[i + 1] = ' ';
+  }
+  out[out_length - 2] = ']';
+  out[out_length - 1] = '\0';
+  return out;
+}
+
 char* to_ascii(byte_string* self) {
   assert(self != NULL);
 

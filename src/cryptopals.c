@@ -258,6 +258,7 @@ static void cleanup_openssl() {
 int main(int argc, char** argv) {
 
   srand(time(NULL));
+  rand();
 
   init_openssl();
 
