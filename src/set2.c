@@ -526,3 +526,7 @@ bool has_inserted_admin(byte_string* encrypted_userdata, char** out) {
 
   return result;
 }
+
+byte_string* break_cbc_encryption(byte_string* data) {
+  return data;
+}

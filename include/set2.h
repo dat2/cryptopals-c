@@ -43,4 +43,6 @@ byte_string* encrypt_userdata(const char* userdata);
 
 bool has_inserted_admin(byte_string* encrypted_userdata, char** out);
 
+byte_string* break_cbc_encryption(byte_string* data);
+
 #endif

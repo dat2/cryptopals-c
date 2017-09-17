@@ -268,7 +268,7 @@ static void challenge15() {
 static void challenge16() {
   char *actual = NULL;
   byte_string* encrypted_userdata = encrypt_userdata(";admin=true;");
-  bool passed = has_inserted_admin(encrypted_userdata, &actual);
+  bool passed = has_inserted_admin(break_cbc_encryption(encrypted_userdata), &actual);
 
   printf("challenge 16:\n");
   printf("actual: %s\n", actual);
