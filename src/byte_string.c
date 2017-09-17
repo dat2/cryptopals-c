@@ -151,7 +151,10 @@ byte_string* substring(byte_string* self, size_t start, size_t end) {
   assert(start >= 0);
   assert(start <= self->length);
   assert(end >= start);
-  assert(end <= self->length);
+
+  if(end > self->length) {
+    end = self->length;
+  }
 
   byte_string* result = new_byte_string(end - start);
   memcpy(result->buffer, self->buffer + start, result->length);
@@ -374,6 +377,21 @@ byte_string* append_byte_string(byte_string* a, byte_string* b) {
   array[0] = a;
   array[1] = b;
   return concat_byte_strings(array, 2);
+}
+
+bool is_equal(byte_string* self, byte_string* other) {
+  assert(self != NULL);
+  assert(other != NULL);
+
+  if(self->length != other->length) {
+    return false;
+  }
+
+  bool result = true;
+  for(size_t i = 0; result && i < self->length; i++) {
+    result = result && self->buffer[i] == other->buffer[i];
+  }
+  return result;
 }
 
 // encryption operations

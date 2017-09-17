@@ -57,6 +57,8 @@ byte_string* concat_byte_strings(byte_string** array, size_t n_elements);
 
 byte_string* append_byte_string(byte_string* a, byte_string* b);
 
+bool is_equal(byte_string* self, byte_string* other);
+
 // encryption operations
 byte_string* fixed_xor(byte_string* a, byte_string* b);
 

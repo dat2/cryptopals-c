@@ -378,88 +378,97 @@ byte_string* decrypt_unknown_string_with_random_prefix(encryption_oracle_func or
   byte_string* empty_ciphertext = oracle(empty);
   size_t empty_string_length = empty_ciphertext->length;
 
-  size_t end_padding_length = 0, block_size = 0;
-  for(size_t i = 1; end_padding_length == 0; i++) {
+  size_t block_size = 0;
+  for(size_t i = 1; block_size == 0; i++) {
     byte_string* repeated = new_byte_string(i);
     byte_string* ciphertext = oracle(repeated);
 
     if(ciphertext->length > empty_string_length) {
       block_size = ciphertext->length - empty_string_length;
-      end_padding_length = i;
     }
     free_byte_string(repeated);
     free_byte_string(ciphertext);
   }
 
-  // step 2: detect that it is using ECB
-  bool is_ecb = false;
-  for(size_t i = 1; i < block_size && !is_ecb; i++) {
-    byte_string* plaintext = new_byte_string(block_size * i);
+  // step 1: figure out how many bytes to pad the random prefix
+  size_t pad_random_prefix_length = 0;
+  for(size_t i = 1; i < block_size && pad_random_prefix_length == 0; i++) {
+    byte_string* plaintext = new_byte_string(i + 2 * block_size);
     byte_string* ciphertext = oracle(plaintext);
-    is_ecb = is_aes_ecb(ciphertext);
+    if(is_aes_ecb(ciphertext)) {
+      pad_random_prefix_length = i;
+    }
     free_byte_string(plaintext);
     free_byte_string(ciphertext);
   }
-  if(!is_ecb) {
-    // uh oh
-    fprintf(stderr, "This oracle is not using ECB to encrypt its data.\n");
-    abort();
+
+  // step 2: figure out how many blocks, the random prefix is
+  size_t n_blocks_random_prefix = 0;
+  byte_string* prefix_plaintext = new_byte_string(pad_random_prefix_length + 2 * block_size);
+  byte_string* prefix_ciphertext = oracle(prefix_plaintext);
+  size_t n_blocks;
+  byte_string** split_ciphertext = split_byte_string(prefix_ciphertext, block_size, &n_blocks);
+  for(size_t i = 0; n_blocks_random_prefix == 0 && i < n_blocks - 1; i++) {
+    if(is_equal(split_ciphertext[i], split_ciphertext[i+1])) {
+      n_blocks_random_prefix = i;
+    }
+  }
+  free_byte_strings(split_ciphertext, n_blocks);
+  free_byte_string(prefix_plaintext);
+  free_byte_string(prefix_ciphertext);
+
+  size_t result_length = empty_string_length - n_blocks_random_prefix * block_size + pad_random_prefix_length;
+  byte_string* result = new_byte_string(result_length);
+
+  // discover the first block worth of bytes
+  for(size_t i = 0; i < result_length; i++) {
+    // n is the current block
+    size_t n = n_blocks_random_prefix + i / block_size;
+
+    // step 3: create an input block, that is 1 byte short
+    byte_string* plaintext_block = new_byte_string(pad_random_prefix_length + block_size - i % block_size - 1);
+    byte_string* ciphertext = oracle(plaintext_block);
+    byte_string* last_ciphertext_block = substring(ciphertext, n * block_size, (n + 1) * block_size);
+
+    // step 4: make a dictionary of ciphertext => plaintext
+    byte_string* dictionary = NULL;
+    for(size_t b = 0; b < 256; b++) {
+      // plaintext is always <zero_prefix><result><variable_byte>
+      byte_string* array[3];
+      array[0] = new_byte_string(pad_random_prefix_length + block_size - i % block_size - 1);
+      array[1] = substring(result, 0, i);
+      array[2] = single_byte(b);
+      byte_string* plaintext = concat_byte_strings(array, 3);
+      free_byte_strings(array, 3);
+
+      // we only care about the nth block for the dictionary
+      byte_string* ciphertext = oracle(plaintext);
+      byte_string* last_ciphertext_block = substring(ciphertext, n * block_size, (n + 1) * block_size);
+      free_byte_string(ciphertext);
+
+      assert(insert(&dictionary, last_ciphertext_block, plaintext));
+    }
+
+    // step 5: match output of input_block to dictionary
+    byte_string* plaintext = find(dictionary, last_ciphertext_block);
+    if(plaintext != NULL) {
+      result->buffer[i] = plaintext->buffer[plaintext->length - 1];
+    }
+
+    clear(&dictionary);
+    free_byte_string(plaintext_block);
+    free_byte_string(ciphertext);
+    free_byte_string(last_ciphertext_block);
   }
 
-  byte_string* result = new_byte_string(empty_string_length);
-
-  // empty_ciphertext = [<random_prefix><start_of_plaintext>]...[<rest_of_plaintext><end_padding>]
-  printf("%zu\n", end_padding_length);
-
-  // // discover the first block worth of bytes
-  // for(size_t i = 0; i < result_length; i++) {
-  //   // n is the current block
-  //   size_t n = i / block_size;
-
-  //   // step 3: create an input block, that is 1 byte short
-  //   byte_string* plaintext_block = new_byte_string(block_size - i % block_size - 1);
-  //   byte_string* ciphertext = oracle(plaintext_block);
-  //   byte_string* last_ciphertext_block = substring(ciphertext, n * block_size, (n + 1) * block_size);
-
-  //   // step 4: make a dictionary of ciphertext => plaintext
-  //   byte_string* dictionary = NULL;
-  //   for(size_t b = 0; b < 256; b++) {
-  //     // plaintext is always <zero_prefix><result><variable_byte>
-  //     byte_string* array[3];
-  //     array[0] = new_byte_string(block_size - i % block_size - 1);
-  //     array[1] = substring(result, 0, i);
-  //     array[2] = single_byte(b);
-  //     byte_string* plaintext = concat_byte_strings(array, 3);
-  //     free_byte_strings(array, 3);
-
-  //     // we only care about the nth block for the dictionary
-  //     byte_string* ciphertext = oracle(plaintext);
-  //     byte_string* last_ciphertext_block = substring(ciphertext, n * block_size, (n + 1) * block_size);
-  //     free_byte_string(ciphertext);
-
-  //     assert(insert(&dictionary, last_ciphertext_block, plaintext));
-  //   }
-
-  //   // step 5: match output of input_block to dictionary
-  //   byte_string* plaintext = find(dictionary, last_ciphertext_block);
-  //   if(plaintext != NULL) {
-  //     result->buffer[i] = plaintext->buffer[plaintext->length - 1];
-  //   }
-
-  //   clear(&dictionary);
-  //   free_byte_string(plaintext_block);
-  //   free_byte_string(ciphertext);
-  //   free_byte_string(last_ciphertext_block);
-  // }
-
-  // // trim and unpad
-  // byte_string* trimmed = rtrim(result);
-  // free_byte_string(result);
-  // byte_string* unpadded = unpad_pkcs7(trimmed);
-  // free_byte_string(trimmed);
-  // result = unpadded;
-
   free_byte_string(empty_ciphertext);
+
+  // trim and unpad
+  byte_string* trimmed = rtrim(result);
+  free_byte_string(result);
+  byte_string* unpadded = unpad_pkcs7(trimmed);
+  free_byte_string(trimmed);
+  result = unpadded;
 
   return result;
 }
