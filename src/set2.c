@@ -508,7 +508,7 @@ bool has_inserted_admin(byte_string* encrypted_userdata, char** out) {
   byte_string* padded_plaintext = rtrim(trimmed_padded_plaintext);
   byte_string* plaintext = unpad_pkcs7(padded_plaintext);
 
-  *out = to_blocks(plaintext, to_ascii);
+  *out = to_ascii(plaintext);
   bool result =  strstr(*out, ";admin=true;") != NULL;
 
   free_byte_string(trimmed_padded_plaintext);
@@ -519,8 +519,25 @@ bool has_inserted_admin(byte_string* encrypted_userdata, char** out) {
 }
 
 byte_string* break_cbc_encryption(byte_string* data) {
-  printf("%s\n", to_blocks(data, to_hex));
-  data->buffer[16 * 1 + 1] |= 0x06;
-  printf("%s\n", to_blocks(data, to_hex));
+  // the plaintext has    "%3Badmin%3Dtrue"
+  // so, we change it to  "a3;admin=true;e"
+  // with XOR because CBC XORS the next plaintext with the previous ciphertext
+
+  // % => a
+  data->buffer[16] ^= 0x44;
+  // B => ;
+  data->buffer[18] ^= 0x79;
+  // % => =
+  data->buffer[24] ^= 0x18;
+  // 3 => t
+  data->buffer[25] ^= 0x47;
+  // D => r
+  data->buffer[26] ^= 0x36;
+  // t => u
+  data->buffer[27] ^= 0x01;
+  // r => e
+  data->buffer[28] ^= 0x17;
+  // u => ;
+  data->buffer[29] ^= 0x04E;
   return data;
 }

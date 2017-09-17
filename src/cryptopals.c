@@ -272,7 +272,7 @@ static void challenge16() {
 
   printf("challenge 16:\n");
   printf("actual: %s\n", actual);
-  printf("passed: %s\n", passed ? "true" : "false");
+  printf("inserted admin: %s\n", passed ? "true" : "false");
 
   free_byte_string(encrypted_userdata);
 }
