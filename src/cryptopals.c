@@ -266,10 +266,13 @@ static void challenge15() {
 }
 
 static void challenge16() {
+  char *actual = NULL;
   byte_string* encrypted_userdata = encrypt_userdata(";admin=true;");
+  bool passed = has_inserted_admin(encrypted_userdata, &actual);
 
   printf("challenge 16:\n");
-  printf("encrypted_userdata: %s\n", to_hex(encrypted_userdata));
+  printf("actual: %s\n", actual);
+  printf("passed: %s\n", passed ? "true" : "false");
 
   free_byte_string(encrypted_userdata);
 }

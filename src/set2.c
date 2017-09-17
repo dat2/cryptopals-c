@@ -502,14 +502,27 @@ byte_string* encrypt_userdata(const char* userdata) {
   array[1] = from_ascii(quoted_userdata);
   array[2] = SUFFIX;
   byte_string* plaintext = concat_byte_strings(array, 3);
-  byte_string* padded_plaintext = pad_pkcs7(plaintext, 16);
-  byte_string* ciphertext = encrypt_aes_128_cbc(padded_plaintext, get_static_key(), get_static_iv());
+  byte_string* ciphertext = encrypt_aes_128_cbc(plaintext, get_static_key(), get_static_iv());
 
   free(quoted_semicolons);
   free(quoted_equals);
   free_byte_string(array[1]);
   free_byte_string(plaintext);
-  free_byte_string(padded_plaintext);
 
   return ciphertext;
+}
+
+bool has_inserted_admin(byte_string* encrypted_userdata, char** out) {
+  byte_string* trimmed_padded_plaintext = decrypt_aes_128_cbc(encrypted_userdata, get_static_key(), get_static_iv());
+  byte_string* padded_plaintext = rtrim(trimmed_padded_plaintext);
+  byte_string* plaintext = unpad_pkcs7(padded_plaintext);
+
+  *out = to_ascii(plaintext);
+  bool result =  strstr(*out, ";admin=true;") != NULL;
+
+  free_byte_string(trimmed_padded_plaintext);
+  free_byte_string(padded_plaintext);
+  free_byte_string(plaintext);
+
+  return result;
 }
