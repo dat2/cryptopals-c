@@ -163,3 +163,50 @@ byte_string* read_file_base64(char* file_name) {
 size_t random_range(size_t min, size_t max) {
    return min + ((size_t)rand()) / (RAND_MAX / (max - min + 1) + 1);
 }
+
+char* replace_all(const char* input, const char* from, const char* to) {
+  assert(input != NULL);
+
+  // malloc
+  char *output = NULL;
+  output = malloc(sizeof(char));
+  assert(output != NULL);
+  size_t output_length = 0;
+
+  size_t to_length = strlen(to), from_length = strlen(from);
+  char *prev = (char*) input, *next = strstr(input, from);
+  while(next != NULL) {
+    // reallocate
+    size_t copy_length = (size_t) (next - prev);
+    output = realloc(output, output_length + copy_length + to_length + 1);
+    assert(output != NULL);
+
+    // copy the string up to the "from" character
+    memcpy(output + output_length, prev, copy_length);
+    memcpy(output + output_length + copy_length, to, to_length);
+
+    // update pointers
+    output_length += copy_length + to_length;
+    prev = next + from_length;
+    next = strstr(prev, from);
+  }
+
+  // if we haven't copied the end of the string, copy it
+  size_t input_length = strlen(input);
+  if(prev - input < input_length) {
+    // reallocate
+    size_t copy_length = input_length - (size_t)(prev - input);
+    output = realloc(output, output_length + copy_length + 1);
+    assert(output != NULL);
+
+    // copy
+    strcat(output, prev);
+
+    // update length
+    output_length += copy_length;
+  }
+
+  // null terminate it
+  output[output_length] = '\0';
+  return output;
+}

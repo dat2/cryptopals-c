@@ -15,4 +15,6 @@ byte_string* read_file_base64(char* file_name);
 
 size_t random_range(size_t min, size_t max);
 
+char* replace_all(const char* input, const char* from, const char* to);
+
 #endif

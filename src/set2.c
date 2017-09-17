@@ -472,3 +472,44 @@ byte_string* decrypt_unknown_string_with_random_prefix(encryption_oracle_func or
 
   return result;
 }
+
+// challenge 16
+byte_string* get_static_iv() {
+  static byte_string* IV = NULL;
+  if(IV == NULL) {
+    IV = random_bytes(16);
+  }
+  assert(IV != NULL);
+  return IV;
+}
+
+byte_string* encrypt_userdata(const char* userdata) {
+  static bool initialized = false;
+  static byte_string* PREFIX = NULL;
+  static byte_string* SUFFIX = NULL;
+  if(!initialized) {
+    PREFIX = from_ascii("comment1=cooking%20MCs;userdata=");
+    SUFFIX = from_ascii(";comment2=%20like%20a%20pound%20of%20bacon");
+    initialized = true;
+  }
+
+  char* quoted_semicolons = replace_all(userdata, ";", "%3B");
+  char* quoted_equals = replace_all(quoted_semicolons, "=", "%3D");
+  char* quoted_userdata = quoted_equals;
+
+  byte_string* array[3];
+  array[0] = PREFIX;
+  array[1] = from_ascii(quoted_userdata);
+  array[2] = SUFFIX;
+  byte_string* plaintext = concat_byte_strings(array, 3);
+  byte_string* padded_plaintext = pad_pkcs7(plaintext, 16);
+  byte_string* ciphertext = encrypt_aes_128_cbc(padded_plaintext, get_static_key(), get_static_iv());
+
+  free(quoted_semicolons);
+  free(quoted_equals);
+  free_byte_string(array[1]);
+  free_byte_string(plaintext);
+  free_byte_string(padded_plaintext);
+
+  return ciphertext;
+}

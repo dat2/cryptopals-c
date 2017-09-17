@@ -265,6 +265,15 @@ static void challenge15() {
   free_byte_string(is_also_not_padded);
 }
 
+static void challenge16() {
+  byte_string* encrypted_userdata = encrypt_userdata(";admin=true;");
+
+  printf("challenge 16:\n");
+  printf("encrypted_userdata: %s\n", to_hex(encrypted_userdata));
+
+  free_byte_string(encrypted_userdata);
+}
+
 static void cleanup_openssl() {
   EVP_cleanup();
   ERR_free_strings();
@@ -305,7 +314,9 @@ int main(int argc, char** argv) {
   // printf("\n");
   // challenge14();
   // printf("\n");
-  challenge15();
+  // challenge15();
+  // printf("\n");
+  challenge16();
   printf("\n");
 
   cleanup_openssl();
