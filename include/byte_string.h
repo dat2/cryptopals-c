@@ -39,6 +39,11 @@ byte_string* substring(byte_string* self, size_t start, size_t end);
 
 byte_string* rtrim(byte_string* self);
 
+// query
+bool is_equal(byte_string* self, byte_string* other);
+
+bool is_pkcs7_padded(byte_string* self);
+
 // extract
 char* to_hex(byte_string* self);
 
@@ -56,8 +61,6 @@ byte_string** split_byte_string(byte_string* self, size_t n_bytes, size_t* num_b
 byte_string* concat_byte_strings(byte_string** array, size_t n_elements);
 
 byte_string* append_byte_string(byte_string* a, byte_string* b);
-
-bool is_equal(byte_string* self, byte_string* other);
 
 // encryption operations
 byte_string* fixed_xor(byte_string* a, byte_string* b);

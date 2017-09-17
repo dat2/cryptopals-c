@@ -174,6 +174,35 @@ byte_string* rtrim(byte_string* self) {
   return result;
 }
 
+// query
+bool is_equal(byte_string* self, byte_string* other) {
+  assert(self != NULL);
+  assert(other != NULL);
+
+  if(self->length != other->length) {
+    return false;
+  }
+
+  bool result = true;
+  for(size_t i = 0; result && i < self->length; i++) {
+    result = result && self->buffer[i] == other->buffer[i];
+  }
+  return result;
+}
+
+bool is_pkcs7_padded(byte_string* self) {
+  assert(self != NULL);
+  assert(self->length >= 0);
+
+  byte last_byte = self->buffer[self->length - 1];
+  // first, check that the elements are all there
+  size_t i = self->length - 1;
+  for(; i > 0 && self->buffer[i] == last_byte; i--) {
+    // keep decrementing
+  }
+  return self->length - last_byte == (i + 1);
+}
+
 // extract
 char* to_hex(byte_string* self) {
   assert(self != NULL);
@@ -377,21 +406,6 @@ byte_string* append_byte_string(byte_string* a, byte_string* b) {
   array[0] = a;
   array[1] = b;
   return concat_byte_strings(array, 2);
-}
-
-bool is_equal(byte_string* self, byte_string* other) {
-  assert(self != NULL);
-  assert(other != NULL);
-
-  if(self->length != other->length) {
-    return false;
-  }
-
-  bool result = true;
-  for(size_t i = 0; result && i < self->length; i++) {
-    result = result && self->buffer[i] == other->buffer[i];
-  }
-  return result;
 }
 
 // encryption operations
@@ -630,19 +644,14 @@ byte_string* unpad_pkcs7(byte_string* self) {
   assert(self != NULL);
   assert(self->length >= 0);
 
-  byte last_byte = self->buffer[self->length - 1];
-  // first, check that the elements are all there
-  size_t i = self->length - 1;
-  for(; i > 0 && self->buffer[i] == last_byte; i--) {
-    // keep decrementing
-  }
   // if all the bytes are the same at the end, then we know it's been padded
   // and we can just rtrim it
-  if(self->length - last_byte == (i + 1)) {
-    byte_string* result = new_byte_string(self->length - last_byte);
+  if(is_pkcs7_padded(self)) {
+    byte_string* result = new_byte_string(self->length - self->buffer[self->length - 1]);
     memcpy(result->buffer, self->buffer, result->length);
     return result;
   } else {
+    // else, we just return a copy of the original string
     byte_string* result = new_byte_string(self->length);
     memcpy(result->buffer, self->buffer, self->length);
     return result;

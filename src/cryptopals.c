@@ -250,6 +250,21 @@ static void challenge14() {
   free_byte_string(decrypted);
 }
 
+static void challenge15() {
+  byte_string* is_padded = from_ascii("ICE ICE BABY\x04\x04\x04\x04");
+  byte_string* is_not_padded = from_ascii("ICE ICE BABY\x05\x05\x05\x05");
+  byte_string* is_also_not_padded=  from_ascii("ICE ICE BABY\x01\x02\x03\x04");
+
+  printf("challenge 15:\n");
+  printf("is_padded         : %s\n", is_pkcs7_padded(is_padded) == true ? "correct" : "incorrect");
+  printf("is_not_padded     : %s\n", is_pkcs7_padded(is_not_padded) == false ? "correct" : "incorrect");
+  printf("is_also_not_padded: %s\n", is_pkcs7_padded(is_also_not_padded) == false ? "correct" : "incorrect");
+
+  free_byte_string(is_padded);
+  free_byte_string(is_not_padded);
+  free_byte_string(is_also_not_padded);
+}
+
 static void cleanup_openssl() {
   EVP_cleanup();
   ERR_free_strings();
@@ -288,7 +303,9 @@ int main(int argc, char** argv) {
   // printf("\n");
   // challenge13();
   // printf("\n");
-  challenge14();
+  // challenge14();
+  // printf("\n");
+  challenge15();
   printf("\n");
 
   cleanup_openssl();
