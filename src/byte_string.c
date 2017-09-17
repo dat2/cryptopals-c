@@ -226,33 +226,6 @@ static char num_to_hex(byte b) {
   }
 }
 
-char* to_hex_blocks(byte_string* self) {
-  assert(self != NULL);
-
-  size_t num_blocks = self->length / 16 + (self->length % 16 > 0);
-  size_t padded_to_block_length = self->length + (self->length % 16 > 0 ? 16 - self->length % 16 : 0);
-  size_t out_length = padded_to_block_length * 2 + (num_blocks - 1 > 0 ? num_blocks - 1 : 0) * 2 + 2 + 1;
-  char* out = (char*) malloc(out_length * sizeof(char));
-  assert(out != NULL);
-
-  out[0] = '[';
-  size_t bracket_offset = 1;
-  for(size_t i = 0; i < self->length; i++) {
-    snprintf(out + (i * 2) + bracket_offset, 3, "%02x", self->buffer[i]);
-    if((i + 1) % 16 == 0) {
-      bracket_offset += 2;
-      snprintf(out + (i * 2) + bracket_offset, 3, "][");
-    }
-  }
-  for(size_t i = self->length * 2 + bracket_offset; i < out_length; i += 2) {
-    out[i] = ' ';
-    out[i + 1] = ' ';
-  }
-  out[out_length - 2] = ']';
-  out[out_length - 1] = '\0';
-  return out;
-}
-
 char* to_ascii(byte_string* self) {
   assert(self != NULL);
 
@@ -329,6 +302,47 @@ char* to_base64(byte_string* self) {
     out[j + 2] = index_to_char(third);
     out[j + 3] = index_to_char(fourth);
   }
+
+  return out;
+}
+
+char* to_blocks(byte_string* self, extract_func f) {
+  size_t array_length;
+  byte_string** array = split_byte_string(self, 16, &array_length);
+
+  size_t out_length = 0;
+  char* out = malloc(sizeof(char));
+  assert(out != NULL);
+  out[0] = '[';
+  for(size_t i = 0; i < array_length; i++) {
+    // get the next block string
+    char* block_str = f(array[i]);
+    size_t block_str_len = strlen(block_str);
+
+    // reallocate
+    out = realloc(out, out_length + block_str_len + 2 + 1);
+    assert(out != NULL);
+
+    // copy
+    memcpy(out + 1 + out_length, block_str, block_str_len);
+    memcpy(out + 1 + out_length + block_str_len, "][", 2);
+
+    // update lengths
+    out_length += block_str_len + 2;
+
+    // free
+    free(block_str);
+  }
+
+  // trim the last two '][' off of it :)
+  out = realloc(out, out_length - 2 + 1);
+  assert(out != NULL);
+  out_length -= 2;
+
+  out[out_length - 2] = ']';
+  out[out_length - 1] = '\0';
+
+  free_byte_strings(array, array_length);
 
   return out;
 }

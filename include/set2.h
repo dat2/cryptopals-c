@@ -37,8 +37,6 @@ byte_string* encryption_oracle_ecb_random_prefix(byte_string* self);
 byte_string* decrypt_unknown_string_with_random_prefix(encryption_oracle_func oracle);
 
 // challenge 16
-byte_string* get_static_iv();
-
 byte_string* encrypt_userdata(const char* userdata);
 
 bool has_inserted_admin(byte_string* encrypted_userdata, char** out);

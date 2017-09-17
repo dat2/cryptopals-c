@@ -474,15 +474,6 @@ byte_string* decrypt_unknown_string_with_random_prefix(encryption_oracle_func or
 }
 
 // challenge 16
-byte_string* get_static_iv() {
-  static byte_string* IV = NULL;
-  if(IV == NULL) {
-    IV = random_bytes(16);
-  }
-  assert(IV != NULL);
-  return IV;
-}
-
 byte_string* encrypt_userdata(const char* userdata) {
   static bool initialized = false;
   static byte_string* PREFIX = NULL;
@@ -502,7 +493,7 @@ byte_string* encrypt_userdata(const char* userdata) {
   array[1] = from_ascii(quoted_userdata);
   array[2] = SUFFIX;
   byte_string* plaintext = concat_byte_strings(array, 3);
-  byte_string* ciphertext = encrypt_aes_128_cbc(plaintext, get_static_key(), get_static_iv());
+  byte_string* ciphertext = encrypt_aes_128_cbc(plaintext, get_static_key(), new_byte_string(16));
 
   free(quoted_semicolons);
   free(quoted_equals);
@@ -513,11 +504,11 @@ byte_string* encrypt_userdata(const char* userdata) {
 }
 
 bool has_inserted_admin(byte_string* encrypted_userdata, char** out) {
-  byte_string* trimmed_padded_plaintext = decrypt_aes_128_cbc(encrypted_userdata, get_static_key(), get_static_iv());
+  byte_string* trimmed_padded_plaintext = decrypt_aes_128_cbc(encrypted_userdata, get_static_key(), new_byte_string(16));
   byte_string* padded_plaintext = rtrim(trimmed_padded_plaintext);
   byte_string* plaintext = unpad_pkcs7(padded_plaintext);
 
-  *out = to_ascii(plaintext);
+  *out = to_blocks(plaintext, to_ascii);
   bool result =  strstr(*out, ";admin=true;") != NULL;
 
   free_byte_string(trimmed_padded_plaintext);
@@ -528,5 +519,8 @@ bool has_inserted_admin(byte_string* encrypted_userdata, char** out) {
 }
 
 byte_string* break_cbc_encryption(byte_string* data) {
+  printf("%s\n", to_blocks(data, to_hex));
+  data->buffer[16 * 1 + 1] |= 0x06;
+  printf("%s\n", to_blocks(data, to_hex));
   return data;
 }
