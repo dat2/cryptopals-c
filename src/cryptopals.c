@@ -11,6 +11,7 @@
 #include "byte_string.h"
 #include "set1.h"
 #include "set2.h"
+#include "set3.h"
 
 static void init_openssl() {
   ERR_load_crypto_strings();
@@ -277,6 +278,18 @@ static void challenge16() {
   free_byte_string(encrypted_userdata);
 }
 
+static void challenge17() {
+  byte_string* iv = NULL;
+  byte_string* ciphertext = create_random_ciphertext(&iv);
+  bool is_valid_padding = consume_ciphertext(ciphertext, iv);
+
+  printf("challenge 17:\n");
+  printf("is padded: %s\n", is_valid_padding ? "true" : "false");
+
+  free_byte_string(iv);
+  free_byte_string(ciphertext);
+}
+
 static void cleanup_openssl() {
   EVP_cleanup();
   ERR_free_strings();
@@ -319,7 +332,9 @@ int main(int argc, char** argv) {
   // printf("\n");
   // challenge15();
   // printf("\n");
-  challenge16();
+  // challenge16();
+  // printf("\n");
+  challenge17();
   printf("\n");
 
   cleanup_openssl();
