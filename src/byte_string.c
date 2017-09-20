@@ -26,6 +26,15 @@ byte_string* new_byte_string(size_t len) {
   return result;
 }
 
+byte_string* copy_byte_string(byte_string* self) {
+  assert(self != NULL);
+  assert(self->length >= 0);
+
+  byte_string* result = new_byte_string(self->length);
+  memcpy(result->buffer, self->buffer, self->length);
+  return result;
+}
+
 static byte hex_to_num(char c) {
   if(c >= '0' && c <= '9') {
     return (byte)(c - '0');
@@ -102,7 +111,9 @@ byte_string* from_base64(const char* base64) {
     self->buffer[j + 1] = second_octet;
     self->buffer[j + 2] = third_octet;
   }
-  return self;
+  byte_string* trimmed = rtrim(self);
+  free_byte_string(self);
+  return trimmed;
 }
 
 byte_string* repeat_byte(size_t len, byte b) {
@@ -310,7 +321,7 @@ char* to_blocks(byte_string* self, extract_func f) {
   size_t array_length;
   byte_string** array = split_byte_string(self, 16, &array_length);
 
-  size_t out_length = 0;
+  size_t out_length = 1;
   char* out = malloc(sizeof(char));
   assert(out != NULL);
   out[0] = '[';
@@ -324,8 +335,8 @@ char* to_blocks(byte_string* self, extract_func f) {
     assert(out != NULL);
 
     // copy
-    memcpy(out + 1 + out_length, block_str, block_str_len);
-    memcpy(out + 1 + out_length + block_str_len, "][", 2);
+    memcpy(out + out_length, block_str, block_str_len);
+    memcpy(out + out_length + block_str_len, "][", 2);
 
     // update lengths
     out_length += block_str_len + 2;
@@ -334,11 +345,7 @@ char* to_blocks(byte_string* self, extract_func f) {
     free(block_str);
   }
 
-  // trim the last two '][' off of it :)
-  out = realloc(out, out_length - 2 + 1);
-  assert(out != NULL);
-  out_length -= 2;
-
+  // replace the last '][' with ']\0'
   out[out_length - 2] = ']';
   out[out_length - 1] = '\0';
 
@@ -466,9 +473,11 @@ static size_t pad_to_block_size(size_t length, size_t block_size) {
   return length + (block_size - length % block_size);
 }
 
-static void handle_openssl_errors(void) {
+static void print_openssl_errors_abort(void) {
+  #ifdef OPENSSL_ABORT
   ERR_print_errors_fp(stderr);
   abort();
+  #endif
 }
 
 byte_string* encrypt_aes_128_ecb(byte_string* self, byte_string* key) {
@@ -477,7 +486,7 @@ byte_string* encrypt_aes_128_ecb(byte_string* self, byte_string* key) {
   assert(key->length == 16);
 
   size_t padded_length = pad_to_block_size(self->length, 16);
-  byte_string* result = new_byte_string(padded_length);
+  byte_string* padded = new_byte_string(padded_length);
 
   EVP_CIPHER_CTX* ctx;
   int len;
@@ -486,29 +495,42 @@ byte_string* encrypt_aes_128_ecb(byte_string* self, byte_string* key) {
   // create cipher ctx
   ctx = EVP_CIPHER_CTX_new();
   if(ctx == NULL) {
-    handle_openssl_errors();
+    print_openssl_errors_abort();
+    free_byte_string(padded);
+    return NULL;
   }
 
   // initialize cipher ctx
   if(1 != EVP_EncryptInit_ex(ctx, EVP_aes_128_ecb(), NULL, key->buffer, NULL)) {
-    handle_openssl_errors();
+    print_openssl_errors_abort();
+    free_byte_string(padded);
+    EVP_CIPHER_CTX_free(ctx);
+    return NULL;
   }
 
   // start encrypting
-  if(1 != EVP_EncryptUpdate(ctx, result->buffer, &len, self->buffer, self->length)) {
-    handle_openssl_errors();
+  if(1 != EVP_EncryptUpdate(ctx, padded->buffer, &len, self->buffer, self->length)) {
+    print_openssl_errors_abort();
+    free_byte_string(padded);
+    EVP_CIPHER_CTX_free(ctx);
+    return NULL;
   }
   ciphertext_len = len;
 
   // finalize encryption
-  if(1 != EVP_EncryptFinal_ex(ctx, result->buffer + len, &len)) {
-    handle_openssl_errors();
+  if(1 != EVP_EncryptFinal_ex(ctx, padded->buffer + len, &len)) {
+    print_openssl_errors_abort();
+    free_byte_string(padded);
+    EVP_CIPHER_CTX_free(ctx);
+    return NULL;
   }
   ciphertext_len += len;
 
   // cleanup
   EVP_CIPHER_CTX_free(ctx);
 
+  byte_string* result = rtrim(padded);
+  free_byte_string(padded);
   return result;
 }
 
@@ -518,7 +540,7 @@ byte_string* decrypt_aes_128_ecb(byte_string* self, byte_string* key) {
   assert(key->length == 16);
 
   size_t padded_length = pad_to_block_size(self->length, 16);
-  byte_string* result = new_byte_string(padded_length);
+  byte_string* padded = new_byte_string(padded_length);
 
   EVP_CIPHER_CTX* ctx;
   int len;
@@ -527,29 +549,42 @@ byte_string* decrypt_aes_128_ecb(byte_string* self, byte_string* key) {
   // create cipher ctx
   ctx = EVP_CIPHER_CTX_new();
   if(ctx == NULL) {
-    handle_openssl_errors();
+    print_openssl_errors_abort();
+    free_byte_string(padded);
+    return NULL;
   }
 
   // initialize cipher ctx
   if(1 != EVP_DecryptInit_ex(ctx, EVP_aes_128_ecb(), NULL, key->buffer, NULL)) {
-    handle_openssl_errors();
+    print_openssl_errors_abort();
+    free_byte_string(padded);
+    EVP_CIPHER_CTX_free(ctx);
+    return NULL;
   }
 
   // start dcrypting
-  if(1 != EVP_DecryptUpdate(ctx, result->buffer, &len, self->buffer, self->length)) {
-    handle_openssl_errors();
+  if(1 != EVP_DecryptUpdate(ctx, padded->buffer, &len, self->buffer, self->length)) {
+    print_openssl_errors_abort();
+    free_byte_string(padded);
+    EVP_CIPHER_CTX_free(ctx);
+    return NULL;
   }
   ciphertext_len = len;
 
   // finalize dcryption
-  if(1 != EVP_DecryptFinal_ex(ctx, result->buffer + len, &len)) {
-    handle_openssl_errors();
+  if(1 != EVP_DecryptFinal_ex(ctx, padded->buffer + len, &len)) {
+    print_openssl_errors_abort();
+    free_byte_string(padded);
+    EVP_CIPHER_CTX_free(ctx);
+    return NULL;
   }
   ciphertext_len += len;
 
   // cleanup
   EVP_CIPHER_CTX_free(ctx);
 
+  byte_string* result = rtrim(padded);
+  free_byte_string(padded);
   return result;
 }
 
@@ -569,23 +604,34 @@ byte_string* encrypt_aes_128_cbc(byte_string* self, byte_string* key, byte_strin
   // create cipher ctx
   ctx = EVP_CIPHER_CTX_new();
   if(ctx == NULL) {
-    handle_openssl_errors();
+    print_openssl_errors_abort();
+    free_byte_string(padded);
+    return NULL;
   }
 
   // initialize cipher ctx
   if(1 != EVP_EncryptInit_ex(ctx, EVP_aes_128_cbc(), NULL, key->buffer, iv->buffer)) {
-    handle_openssl_errors();
+    print_openssl_errors_abort();
+    free_byte_string(padded);
+    EVP_CIPHER_CTX_free(ctx);
+    return NULL;
   }
 
   // start encrypting
   if(1 != EVP_EncryptUpdate(ctx, padded->buffer, &len, self->buffer, self->length)) {
-    handle_openssl_errors();
+    print_openssl_errors_abort();
+    free_byte_string(padded);
+    EVP_CIPHER_CTX_free(ctx);
+    return NULL;
   }
   ciphertext_len = len;
 
   // finalize encryption
   if(1 != EVP_EncryptFinal_ex(ctx, padded->buffer + len, &len)) {
-    handle_openssl_errors();
+    print_openssl_errors_abort();
+    free_byte_string(padded);
+    EVP_CIPHER_CTX_free(ctx);
+    return NULL;
   }
   ciphertext_len += len;
 
@@ -613,23 +659,34 @@ byte_string* decrypt_aes_128_cbc(byte_string* self, byte_string* key, byte_strin
   // create cipher ctx
   ctx = EVP_CIPHER_CTX_new();
   if(ctx == NULL) {
-    handle_openssl_errors();
+    print_openssl_errors_abort();
+    free_byte_string(padded);
+    return NULL;
   }
 
   // initialize cipher ctx
   if(1 != EVP_DecryptInit_ex(ctx, EVP_aes_128_cbc(), NULL, key->buffer, iv->buffer)) {
-    handle_openssl_errors();
+    print_openssl_errors_abort();
+    free_byte_string(padded);
+    EVP_CIPHER_CTX_free(ctx);
+    return NULL;
   }
 
   // start dcrypting
   if(1 != EVP_DecryptUpdate(ctx, padded->buffer, &len, self->buffer, self->length)) {
-    handle_openssl_errors();
+    print_openssl_errors_abort();
+    free_byte_string(padded);
+    EVP_CIPHER_CTX_free(ctx);
+    return NULL;
   }
   ciphertext_len = len;
 
   // finalize dcryption
   if(1 != EVP_DecryptFinal_ex(ctx, padded->buffer + len, &len)) {
-    handle_openssl_errors();
+    print_openssl_errors_abort();
+    free_byte_string(padded);
+    EVP_CIPHER_CTX_free(ctx);
+    return NULL;
   }
   ciphertext_len += len;
 

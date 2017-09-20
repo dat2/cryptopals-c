@@ -21,6 +21,8 @@ typedef struct byte_string {
 // construction
 byte_string* new_byte_string(size_t len);
 
+byte_string* copy_byte_string(byte_string* self);
+
 byte_string* from_hex(const char* hex);
 
 byte_string* from_ascii(const char* ascii);

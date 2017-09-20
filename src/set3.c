@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
 
 #include "set3.h"
 #include "utils.h"
@@ -33,13 +34,55 @@ byte_string* create_random_ciphertext(byte_string** iv) {
     initialized = true;
   }
   byte_string* plaintext = RANDOM_PLAINTEXTS[random_range(0,9)];
+  printf("%s\n", to_ascii(pad_pkcs7(plaintext, 16)));
   *iv = random_bytes(16);
   return encrypt_aes_128_cbc(plaintext, get_challenge17_key(), *iv);
 }
 
-bool consume_ciphertext(byte_string* ciphertext, byte_string* iv) {
+bool padding_oracle(byte_string* ciphertext, byte_string* iv) {
   byte_string* plaintext = decrypt_aes_128_cbc(ciphertext, get_challenge17_key(), iv);
+  if(plaintext == NULL) {
+    return false;
+  }
   bool result = is_pkcs7_padded(plaintext);
   free_byte_string(plaintext);
   return result;
+}
+
+byte_string* decrypt_ciphertext_with_padding_oracle(byte_string* ciphertext, byte_string* iv) {
+  byte_string* result = new_byte_string(ciphertext->length);
+
+  for(size_t i = ciphertext->length; i > 0; i--) {
+    size_t padding = ciphertext->length - (i - 1);
+
+    byte_string* ciphertext_copy = copy_byte_string(ciphertext);
+    byte_string* iv_copy = copy_byte_string(iv);
+
+    if(i > 16) {
+
+      // first, pad the block just before the block we care about
+      for(size_t j = i - 1; j < ciphertext->length; j++) {
+        ciphertext_copy->buffer[j - 16] ^= padding;
+      }
+
+      // then, try to guess the ith byte
+      for(byte b = 0; b < 255; b++) {
+        if(b != padding) {
+          ciphertext_copy->buffer[i - 16 - 1] ^= b;
+          if(padding_oracle(ciphertext_copy, iv_copy)) {
+            printf("last byte: \\x%02x\n", b);
+            break;
+          }
+          ciphertext_copy->buffer[i - 16 - 1] ^= b;
+        }
+      }
+    }
+
+    free_byte_string(ciphertext_copy);
+    free_byte_string(iv_copy);
+
+    break;
+  }
+
+  return empty_byte_string();
 }

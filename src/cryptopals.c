@@ -279,15 +279,21 @@ static void challenge16() {
 }
 
 static void challenge17() {
+  char* actual = NULL;
+
   byte_string* iv = NULL;
   byte_string* ciphertext = create_random_ciphertext(&iv);
-  bool is_valid_padding = consume_ciphertext(ciphertext, iv);
+  byte_string* plaintext = decrypt_ciphertext_with_padding_oracle(ciphertext, iv);
+
+  actual = to_ascii(plaintext);
 
   printf("challenge 17:\n");
-  printf("is padded: %s\n", is_valid_padding ? "true" : "false");
+  printf("actual: %s\n", actual);
 
+  free(actual);
   free_byte_string(iv);
   free_byte_string(ciphertext);
+  free_byte_string(plaintext);
 }
 
 static void cleanup_openssl() {

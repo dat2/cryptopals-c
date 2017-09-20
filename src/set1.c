@@ -262,15 +262,13 @@ byte_string* break_repeating_key_xor(byte_string* input) {
 
 byte_string* decrypt_aes_128_ecb_file(byte_string* input) {
   byte_string* key = from_ascii("YELLOW SUBMARINE");
-  byte_string* padded_untrimmed = decrypt_aes_128_ecb(input, key);
-  byte_string* padded = rtrim(padded_untrimmed);
-  byte_string* result = unpad_pkcs7(padded);
+  byte_string* padded_plaintext = decrypt_aes_128_ecb(input, key);
+  byte_string* plaintext = unpad_pkcs7(padded_plaintext);
 
   free_byte_string(key);
-  free_byte_string(padded_untrimmed);
-  free_byte_string(padded);
+  free_byte_string(padded_plaintext);
 
-  return result;
+  return plaintext;
 }
 
 size_t detect_aes_ecb(char* file_name) {
